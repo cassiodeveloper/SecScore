@@ -31,7 +31,7 @@ jobs:
       # Você pode começar só com um findings.json de exemplo para validar.
       - name: Generate findings.json (placeholder)
         run: |
-          cp examples/findings.sample.json findings.json
+          cp examples/findings-fail.json findings.json
 
       - name: Run SecScore
         id: secscore
