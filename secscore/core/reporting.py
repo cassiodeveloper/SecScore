@@ -17,6 +17,8 @@ def render_pr_comment(result: EngineResult) -> str:
     emoji = {"PASS": "✅", "REVIEW": "🟡", "FAIL": "⛔"}[result.decision]
 
     lines: List[str] = []
+    
+    lines.append("<!-- SECSCORE_COMMENT -->")
     lines.append(f"## SecScore {emoji}")
     lines.append(f"**Score:** `{result.score}/100`")
     lines.append(f"**Decision:** `{result.decision}`")
