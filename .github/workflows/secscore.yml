@@ -27,8 +27,6 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      # AQUI entram seus scanners + normalizador que gera findings.json
-      # Você pode começar só com um findings.json de exemplo para validar.
       - name: Generate findings.json (placeholder)
         run: |
           cp examples/findings-clean.json findings.json
@@ -44,48 +42,131 @@ jobs:
           echo "exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: Publish PR comment + Check Run
+      - name: Label PR based on SecScore
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
 
-            const body = fs.readFileSync('pr-comment.md', 'utf8');
-            const exitCode = Number('${{ steps.secscore.outputs.exit_code }}');
+            const label = 'secscore-review';
 
-            const conclusion =
-              exitCode === 0 ? 'success' :
-              exitCode === 1 ? 'neutral' :
-              'failure';
+            if (!fs.existsSync('secscore-result.json')) {
+              return;
+            }
 
-            const title =
-              exitCode === 0 ? 'SecScore PASS' :
-              exitCode === 1 ? 'SecScore REVIEW' :
-              'SecScore FAIL';
+            const result = JSON.parse(fs.readFileSync('secscore-result.json', 'utf8'));
 
-            // Comment in PR
-            await github.rest.issues.createComment({
+            const issue = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
+              issue_number: context.issue.number
             });
 
-            // Status check (Check Run)
+            const hasLabel = issue.data.labels.some(l => l.name === label);
+
+            if (result.decision === 'REVIEW' && !hasLabel) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: [label]
+              });
+            }
+
+            if (result.decision !== 'REVIEW' && hasLabel) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: label
+              });
+            }
+
+      - name: Create SecScore status check
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('secscore-result.json')) {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: "SecScore",
+                head_sha: context.payload.pull_request.head.sha,
+                status: "completed",
+                conclusion: "failure",
+                output: {
+                  title: "SecScore FAIL",
+                  summary: "SecScore did not produce a result file (secscore-result.json)."
+                }
+              });
+              return;
+            }
+
+            const result = JSON.parse(fs.readFileSync('secscore-result.json', 'utf8'));
+            const summary = fs.existsSync("pr-comment.md")
+              ? fs.readFileSync("pr-comment.md", "utf8")
+              : `SecScore ${result.decision} — Score ${result.score}/100`;
+
+            const conclusion =
+              result.decision === "PASS" ? "success" :
+              result.decision === "REVIEW" ? "success" :
+              "failure";
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              name: 'SecScore',
+              name: "SecScore",
               head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
+              status: "completed",
               conclusion,
               output: {
-                title,
-                summary: body
+                title: `SecScore ${result.decision}`,
+                summary
               }
             });
 
-      # Garante que o job falhe quando SecScore der FAIL (exit code 2)
+      - name: Publish PR comment (upsert)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('pr-comment.md')) {
+              return;
+            }
+
+            const body = fs.readFileSync('pr-comment.md', 'utf8');
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const marker = "SecScore — Security Score that matters.";
+            const existing = comments.data.find(c => (c.body || "").includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
       - name: Fail job on SecScore FAIL
         if: ${{ steps.secscore.outputs.exit_code == '2' }}
         run: exit 1
