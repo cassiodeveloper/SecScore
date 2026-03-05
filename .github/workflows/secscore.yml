@@ -167,6 +167,12 @@ jobs:
               });
             }
 
+      - name: Auto approve PR when SecScore PASS
+        if: ${{ steps.secscore.outputs.exit_code == '0' }}
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Fail job on SecScore FAIL
         if: ${{ steps.secscore.outputs.exit_code == '2' }}
         run: exit 1
