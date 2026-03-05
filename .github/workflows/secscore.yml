@@ -29,7 +29,7 @@ jobs:
 
       - name: Generate findings.json (placeholder)
         run: |
-          cp examples/findings-fail.json findings.json
+          cp examples/findings-review.json findings.json
 
       - name: Run SecScore
         id: secscore
