@@ -1,0 +1,86 @@
+policy_version: "1.0"
+mode: "pull_request"
+
+decision:
+  pass_min_score: 80
+  review_min_score: 51
+  fail_below_score: 50
+
+scoring:
+  base_score: 100
+
+  penalties:
+    critical: 40
+    high: 20
+    medium: 7
+    low: 2
+    info: 0
+
+  multipliers:
+    confidence:
+      high: 1.0
+      medium: 0.8
+      low: 0.5
+      unknown: 0.7
+
+    fix_available:
+      true: 1.0
+      false: 0.8
+
+hard_fails:
+  - id: "SAST_CRITICAL_HIGH_CONF"
+    when:
+      domain: "sast"
+      severity_in: ["critical"]
+      confidence_in: ["high"]
+      is_new: true
+    reason: "High confidence new critical SAST finding"
+
+  - id: "SCA_RUNTIME_CRIT_OR_HIGH"
+    when:
+      domain: "sca"
+      severity_in: ["critical", "high"]
+      is_new: true
+      metadata:
+        runtime: true
+    reason: "New runtime dependency with critical/high vulnerability"
+
+  - id: "CONTAINER_CRIT_OR_HIGH"
+    when:
+      domain: "container"
+      severity_in: ["critical", "high"]
+      is_new: true
+    reason: "New critical/high vulnerability in container"
+
+  - id: "IAC_CRITICAL"
+    when:
+      domain: "iac"
+      severity_in: ["critical"]
+      is_new: true
+    reason: "New IaC cxritical finding"
+
+  - id: "SECRET_LEAK"
+    when:
+      metadata:
+        tags_any: ["secret", "credential", "token"]
+      is_new: true
+      severity_in: ["high", "critical"]
+    reason: "Possible secret leak"
+
+reporting:
+  max_findings_in_comment: 10
+  max_reasons: 3
+  group_by: ["domain", "severity"]
+  include_fields:
+    - "title"
+    - "severity"
+    - "domain"
+    - "asset.path"
+    - "asset.line"
+    - "metadata.cve"
+    - "metadata.package"
+    - "metadata.image"
+
+suppressions:
+  allow_tags: []
+  deny_rule_ids: []

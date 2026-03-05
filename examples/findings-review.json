@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "repo": "local/secscore-demo",
+  "generated_at": "2026-01-02T12:10:00Z",
+  "pr": {
+    "id": "local-3",
+    "base_ref": "main",
+    "head_sha": "112233aabbcc",
+    "changed_files": ["src/service.py", "infra/app.tf", "Dockerfile"]
+  },
+  "findings": [
+    {
+      "id": "SAST-HIGH-001",
+      "domain": "sast",
+      "tool": "semgrep",
+      "severity": "high",
+      "confidence": "medium",
+      "title": "Potential command injection via shell=True",
+      "description": "User-controlled input is passed to a shell command with shell=True.",
+      "fingerprint": "sast-cmdinj-001",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "code",
+        "ref": "src/service.py",
+        "path": "src/service.py",
+        "line": 57
+      },
+      "metadata": {
+        "cwe": "CWE-78",
+        "rule_id": "SEMGRP-CMD-001",
+        "tags": ["injection"]
+      }
+    },
+    {
+      "id": "SCA-MED-002",
+      "domain": "sca",
+      "tool": "trivy",
+      "severity": "medium",
+      "confidence": "unknown",
+      "title": "Transitive dependency with Medium severity CVE",
+      "description": "A transitive dependency includes a known Medium severity CVE.",
+      "fingerprint": "sca-libfoo-CVE-2024-2222",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "dependency",
+        "ref": "libfoo@1.2.3"
+      },
+      "metadata": {
+        "cve": "CVE-2024-2222",
+        "package": "libfoo",
+        "version": "1.2.3",
+        "runtime": false,
+        "tags": ["dependency", "transitive"]
+      }
+    },
+    {
+      "id": "CONTAINER-MED-003",
+      "domain": "container",
+      "tool": "trivy",
+      "severity": "medium",
+      "confidence": "unknown",
+      "title": "Medium severity vulnerability in container image",
+      "description": "A Medium severity CVE was found in the container image.",
+      "fingerprint": "container-app-CVE-2024-3333",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "image",
+        "ref": "myapp:pr-123"
+      },
+      "metadata": {
+        "cve": "CVE-2024-3333",
+        "image": "myapp:pr-123",
+        "tags": ["container"]
+      }
+    },
+    {
+      "id": "IAC-LOW-004",
+      "domain": "iac",
+      "tool": "checkov",
+      "severity": "low",
+      "confidence": "high",
+      "title": "Resource missing encryption at rest",
+      "description": "Encryption at rest is not explicitly enabled.",
+      "fingerprint": "iac-encryption-004",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "iac",
+        "ref": "infra/app.tf",
+        "path": "infra/app.tf",
+        "line": 19
+      },
+      "metadata": {
+        "rule_id": "CKV_GEN_1",
+        "tags": ["encryption"]
+      }
+    }
+  ]
+}

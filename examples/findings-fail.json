@@ -1,0 +1,215 @@
+{
+  "schema_version": "1.0",
+  "repo": "local/secscore-demo",
+  "generated_at": "2026-01-02T12:05:00Z",
+  "pr": {
+    "id": "local-2",
+    "base_ref": "main",
+    "head_sha": "fed654cba321",
+    "changed_files": ["src/user_controller.py", "src/db.py", "infra/network.tf", "Dockerfile", "requirements.txt"]
+  },
+  "findings": [
+    {
+      "id": "SAST-CRIT-001",
+      "domain": "sast",
+      "tool": "semgrep",
+      "severity": "critical",
+      "confidence": "high",
+      "title": "Auth bypass via missing authorization check",
+      "description": "Route allows access without enforcing authorization.",
+      "fingerprint": "sast-auth-bypass-001",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "code",
+        "ref": "src/user_controller.py",
+        "path": "src/user_controller.py",
+        "line": 88
+      },
+      "metadata": {
+        "cwe": "CWE-285",
+        "rule_id": "SEMGRP-AUTHZ-001",
+        "tags": ["authz"]
+      }
+    },
+    {
+      "id": "SAST-HIGH-002",
+      "domain": "sast",
+      "tool": "semgrep",
+      "severity": "high",
+      "confidence": "high",
+      "title": "SQL Injection in dynamic query construction",
+      "description": "User input concatenated into SQL query.",
+      "fingerprint": "sast-sqli-002",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "code",
+        "ref": "src/db.py",
+        "path": "src/db.py",
+        "line": 41
+      },
+      "metadata": {
+        "cwe": "CWE-89",
+        "rule_id": "SEMGRP-SQLI-001",
+        "tags": ["injection"]
+      }
+    },
+    {
+      "id": "SCA-HIGH-003",
+      "domain": "sca",
+      "tool": "trivy",
+      "severity": "high",
+      "confidence": "unknown",
+      "title": "Vulnerable runtime dependency",
+      "description": "New runtime dependency with known vulnerability.",
+      "fingerprint": "sca-requests-CVE-2025-0001",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "dependency",
+        "ref": "requests@2.19.0"
+      },
+      "metadata": {
+        "cve": "CVE-2025-0001",
+        "package": "requests",
+        "version": "2.19.0",
+        "runtime": true,
+        "tags": ["dependency"]
+      }
+    },
+    {
+      "id": "CONTAINER-HIGH-004",
+      "domain": "container",
+      "tool": "trivy",
+      "severity": "high",
+      "confidence": "unknown",
+      "title": "High severity vulnerability in base image",
+      "description": "New high severity CVE found in container base image.",
+      "fingerprint": "container-alpine-CVE-2025-1002",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "image",
+        "ref": "alpine:3.19"
+      },
+      "metadata": {
+        "cve": "CVE-2025-1002",
+        "image": "alpine:3.19",
+        "tags": ["container"]
+      }
+    },
+    {
+      "id": "IAC-CRIT-005",
+      "domain": "iac",
+      "tool": "checkov",
+      "severity": "critical",
+      "confidence": "high",
+      "title": "Security group allows inbound from 0.0.0.0/0 to SSH",
+      "description": "Ingress rule exposes SSH to the Internet.",
+      "fingerprint": "iac-sg-public-ssh-005",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "iac",
+        "ref": "infra/network.tf",
+        "path": "infra/network.tf",
+        "line": 27
+      },
+      "metadata": {
+        "rule_id": "CKV_AWS_24",
+        "tags": ["network", "exposure"]
+      }
+    },
+    {
+      "id": "SAST-MED-006",
+      "domain": "sast",
+      "tool": "semgrep",
+      "severity": "medium",
+      "confidence": "medium",
+      "title": "Potential SSRF via user-controlled URL",
+      "description": "URL is derived from user input without allowlist validation.",
+      "fingerprint": "sast-ssrf-006",
+      "is_new": true,
+      "fix_available": false,
+      "asset": {
+        "type": "code",
+        "ref": "src/user_controller.py",
+        "path": "src/user_controller.py",
+        "line": 132
+      },
+      "metadata": {
+        "cwe": "CWE-918",
+        "rule_id": "SEMGRP-SSRF-001",
+        "tags": ["ssrf"]
+      }
+    },
+    {
+      "id": "SCA-MED-007",
+      "domain": "sca",
+      "tool": "trivy",
+      "severity": "medium",
+      "confidence": "unknown",
+      "title": "Transitive dependency with Medium severity CVE",
+      "description": "A transitive dependency includes a known Medium severity CVE.",
+      "fingerprint": "sca-urllib3-CVE-2024-9999",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "dependency",
+        "ref": "urllib3@1.26.5"
+      },
+      "metadata": {
+        "cve": "CVE-2024-9999",
+        "package": "urllib3",
+        "version": "1.26.5",
+        "runtime": true,
+        "tags": ["dependency", "transitive"]
+      }
+    },
+    {
+      "id": "IAC-LOW-008",
+      "domain": "iac",
+      "tool": "checkov",
+      "severity": "low",
+      "confidence": "high",
+      "title": "S3 bucket missing access logging",
+      "description": "Bucket logging is disabled.",
+      "fingerprint": "iac-s3-logging-008",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "iac",
+        "ref": "infra/network.tf",
+        "path": "infra/network.tf",
+        "line": 83
+      },
+      "metadata": {
+        "rule_id": "CKV_AWS_18",
+        "tags": ["logging"]
+      }
+    },
+    {
+      "id": "SECRET-HIGH-009",
+      "domain": "sast",
+      "tool": "gitleaks",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Potential credential committed in repository",
+      "description": "A token-like string was detected in a changed file.",
+      "fingerprint": "secret-token-009",
+      "is_new": true,
+      "fix_available": true,
+      "asset": {
+        "type": "code",
+        "ref": "src/app.py",
+        "path": "src/app.py",
+        "line": 12
+      },
+      "metadata": {
+        "rule_id": "GITLEAKS-SECRET",
+        "tags": ["secret", "token"]
+      }
+    }
+  ]
+}

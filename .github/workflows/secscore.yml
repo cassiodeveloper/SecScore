@@ -1,0 +1,93 @@
+name: SecScore PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      # ------------------------------------------------------------------
+      # AQUI entram seus scanners + normalizador que gera findings.json
+      # Você pode começar só com um findings.json de exemplo para validar.
+      # ------------------------------------------------------------------
+      - name: Generate findings.json (placeholder)
+        run: |
+          cp examples/findings.sample.json findings.json
+
+      - name: Run SecScore
+        id: secscore
+        run: |
+          python3 -m secscore.cli.secscore pr \
+            --findings findings.json \
+            --policy policy/policy-pr.yml \
+            --out pr-comment.md \
+            --json-out secscore-result.json
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Publish PR comment + Check Run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const body = fs.readFileSync('pr-comment.md', 'utf8');
+            const exitCode = Number('${{ steps.secscore.outputs.exit_code }}');
+
+            const conclusion =
+              exitCode === 0 ? 'success' :
+              exitCode === 1 ? 'neutral' :
+              'failure';
+
+            const title =
+              exitCode === 0 ? 'SecScore PASS' :
+              exitCode === 1 ? 'SecScore REVIEW' :
+              'SecScore FAIL';
+
+            // Comment in PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+            // Status check (Check Run)
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'SecScore',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion,
+              output: {
+                title,
+                summary: body
+              }
+            });
+
+      # Garante que o job falhe quando SecScore der FAIL (exit code 2)
+      - name: Fail job on SecScore FAIL
+        if: ${{ steps.secscore.outputs.exit_code == '2' }}
+        run: exit 1

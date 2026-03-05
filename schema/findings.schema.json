@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/security-score/findings.schema.json",
+  "title": "Security Findings Envelope Schema",
+  "type": "object",
+  "required": ["schema_version", "repo", "pr", "generated_at", "findings"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^1\\.0$" },
+    "repo": { "type": "string", "minLength": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "pr": {
+      "type": "object",
+      "required": ["id", "base_ref", "head_sha", "changed_files"],
+      "properties": {
+        "id": { "type": ["string", "integer"] },
+        "base_ref": { "type": "string", "minLength": 1 },
+        "head_sha": { "type": "string", "minLength": 7 },
+        "changed_files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": true
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "required": [
+        "id",
+        "domain",
+        "tool",
+        "severity",
+        "confidence",
+        "title",
+        "fingerprint",
+        "is_new",
+        "fix_available",
+        "asset"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "domain": { "type": "string", "enum": ["sast", "sca", "iac", "container"] },
+        "tool": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+        "confidence": { "type": "string", "enum": ["high", "medium", "low", "unknown"] },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "fingerprint": { "type": "string", "minLength": 6 },
+        "is_new": { "type": "boolean" },
+        "fix_available": { "type": "boolean" },
+        "asset": {
+          "type": "object",
+          "required": ["type", "ref"],
+          "properties": {
+            "type": { "type": "string", "enum": ["code", "dependency", "iac", "image"] },
+            "ref": { "type": "string", "minLength": 1 },
+            "path": { "type": "string" },
+            "line": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": true
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "cwe": { "type": "string" },
+            "cve": { "type": "string" },
+            "package": { "type": "string" },
+            "version": { "type": "string" },
+            "image": { "type": "string" },
+            "rule_id": { "type": "string" },
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "runtime": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
