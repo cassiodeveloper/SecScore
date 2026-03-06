@@ -2,7 +2,7 @@ policy_version: "1.0"
 mode: "pull_request"
 
 decision:
-  pass_min_score: 85
+  pass_min_score: 80
   review_min_score: 51
   fail_below_score: 50
 
@@ -41,7 +41,7 @@ hard_fails:
     domain: "sast"
     severity_in: [ "critical", "high" ]
     is_new: true
-  reason: "New critical / high SAST finding(s)."
+  reason: "High confidence new critical SAST finding"
 
 - id: "SCA_RUNTIME_CRIT_OR_HIGH"
   when:
@@ -75,7 +75,7 @@ hard_fails:
   reason: "Possible secret leak"
 
 reporting:
-  max_findings_in_comment: 5
+  max_findings_in_comment: 10
   max_reasons: 3
   group_by: [ "domain", "severity" ]
   include_fields:

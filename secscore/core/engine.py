@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 import json
+import fnmatch
 
 # Decisões do SecScore (PR mode)
 Decision = str  # "PASS" | "REVIEW" | "FAIL"
@@ -42,7 +43,27 @@ def run_engine(inp: EngineInput) -> EngineResult:
     - Seleciona findings para exibir no comentário
     """
     policy = inp.policy
-    findings_all: List[Dict[str, Any]] = inp.findings.get("findings", [])
+    if isinstance(inp.findings, list):
+        findings_all = inp.findings
+    else:
+        findings_all = inp.findings.get("findings", [])
+
+    ignore_patterns = inp.policy.get("ignore_paths", [])
+
+    filtered_findings = []
+      
+    for f in findings_all:
+
+        asset = f.get("asset", {})
+        path = asset.get("path")
+        path = path.replace("\\", "/")
+
+        if should_ignore_path(path, ignore_patterns):
+            continue
+
+        filtered_findings.append(f)
+
+    findings_all = filtered_findings
 
     # 1) Filtrar somente is_new=true (PR mode)
     findings_new = [f for f in findings_all if bool(f.get("is_new", False))]
@@ -68,15 +89,7 @@ def run_engine(inp: EngineInput) -> EngineResult:
     # 7) Seleção do que mostrar no comentário
     findings_shown = _select_findings_to_show(findings_new, hard_fails, policy)
 
-    return EngineResult(
-        score=score,
-        decision=decision,
-        reasons=reasons,
-        hard_fails=hard_fails,
-        findings_new=findings_new,
-        findings_shown=findings_shown,
-        penalties_total=float(penalties_total),
-    )
+    return EngineResult(score=score, decision=decision, reasons=reasons, hard_fails=hard_fails, findings_new=findings_new, findings_shown=findings_shown, penalties_total=float(penalties_total))
 
 # -------------------------
 # Helpers (core rules)
@@ -236,3 +249,21 @@ def _select_findings_to_show(findings_new: List[Dict[str, Any]], hard_fails: Lis
 def _sort_key(f: Dict[str, Any]) -> Tuple[int, str]:
     sev = f.get("severity", "info")
     return (SEVERITY_ORDER.get(sev, 99), f.get("title", ""))
+
+def should_ignore_path(path: str, patterns: list[str]) -> bool:
+    if not path:
+        return False
+
+    path = path.replace("\\", "/")
+
+    for pattern in patterns:
+
+        # wildcard
+        if fnmatch.fnmatch(path, pattern):
+            return True
+
+        # directory match
+        if pattern.endswith("/") and pattern in path:
+            return True
+
+    return False

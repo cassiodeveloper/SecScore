@@ -1,0 +1,34 @@
+name: SecScore PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Scanner (exemplo)
+      - name: Run Semgrep
+        run: semgrep --sarif --output semgrep.sarif
+
+      - name: Run Trivy
+        run: trivy fs --format sarif -o trivy.sarif .
+
+      - name: Merge SARIF
+        run: |
+            jq -s '{runs: map(.runs[]) }' semgrep.sarif trivy.sarif > security.sarif
+
+      # SecScore
+      - name: Run SecScore
+        uses: cassiodeveloper/secscore@v1
+        with:
+          sarif: security.sarif

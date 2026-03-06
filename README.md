@@ -1,80 +1,234 @@
+
 # SecScore
 
-**Security score that matters.**
+🇺🇸 English | 🇧🇷 [Português](README.pt-br.md)
 
-SecScore takes the output of existing security tools  
-(SAST, SCA, IaC, Container) and turns them into a **clear, decision-ready security score for Pull Requests**.
+**Security Score that matters.**
 
-No dashboards.  
-No vendor lock-in.  
-No guesswork.
+SecScore is a lightweight security scoring engine for CI/CD pipelines.  
+It evaluates findings from security scanners and calculates a **single security score for a Pull Request**, allowing teams to automatically decide whether a change should **PASS, require REVIEW, or FAIL**.
 
----
-
-## What SecScore does
-
-SecScore focuses on **measurement**, not control.
-
-For every Pull Request, it:
-1. Collects results from security scanners already configured in your CI
-2. Evaluates **only the new risk introduced by the PR**
-3. Applies explicit, versioned security policies
-4. Produces a security score (0–100)
-5. Publishes:
-   - a clear comment on the PR
-   - a status check (PASS / REVIEW / FAIL)
-
-SecScore provides the signal.  
-Your process decides what to do with it.
+The tool is scanner‑agnostic and works with **SARIF**, making it compatible with most modern security scanners.
 
 ---
 
-## What SecScore does NOT do
+## Badges
 
-- Does not run scanners
-- Does not replace SAST, SCA, IaC or container tools
-- Does not provide dashboards
-- Does not hide logic behind black boxes
-- Does not make decisions for you
-
-SecScore measures risk so decisions can be made explicitly.
+![CI](https://github.com/cassiodeveloper/secscore/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/github/license/cassiodeveloper/secscore)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![GitHub Action](https://img.shields.io/badge/github-action-ready-black)
 
 ---
 
-## Why Pull Requests
+## Why SecScore
 
-Pull Requests are where risk is introduced.
+Security scanners generate findings.  
+But pipelines need **decisions**.
 
-SecScore evaluates:
-- **delta only** — what changed in this PR
-- **new findings only** — no legacy punishment
-- **explainable signals** — not raw scanner noise
+Pipeline flow:
 
-This keeps security feedback actionable and fair.
+Scanner → Findings → SecScore → Score → Decision
 
----
+Example:
 
-## Inputs
-
-- `findings.json` — normalized security findings  
-- `policy-pr.yml` — policy-as-code defining scoring and thresholds
+Score: 82 / 100  
+Decision: REVIEW
 
 ---
 
-## Outputs
+## Key Features
 
-- Security score (0–100)
-- Pull Request comment with top findings and reasons
-- Status check:
-  - `PASS` → no significant new risk
-  - `REVIEW` → security review recommended
-  - `FAIL` → unacceptable new risk detected
-
-Exit codes:
-- `0` → PASS
-- `1` → REVIEW
-- `2` → FAIL
+- Security score for Pull Requests
+- Hard fail rules for critical vulnerabilities
+- SARIF compatible (Snyk, CodeQL, Semgrep, Checkmarx, etc.)
+- GitHub Action ready
+- Policy‑driven security decisions
+- Lightweight and fast
+- Open source
 
 ---
 
-## Example Pull Request comment
+## How It Works
+
+Security Scanner  
+↓  
+SARIF  
+↓  
+SecScore Parser  
+↓  
+Policy Engine  
+↓  
+Score Calculation  
+↓  
+PASS / REVIEW / FAIL
+
+---
+
+## Supported Inputs
+
+| Scanner | Format |
+|-------|-------|
+| Snyk | SARIF |
+| CodeQL | SARIF |
+| Semgrep | SARIF |
+| Checkmarx | SARIF |
+| Checkmarx API | JSON |
+
+Most modern security scanners support SARIF.
+
+---
+
+## Installation
+
+Clone the repository:
+
+```
+git clone https://github.com/cassiodeveloper/secscore
+cd secscore
+```
+
+Install dependencies:
+
+```
+pip install -r requirements.txt
+```
+
+---
+
+## Running Locally
+
+You can test SecScore locally using the provided examples.
+
+```
+python -m secscore.cli.main pr   --sarif examples/example-snyk.sarif   --policy policy/policy-pr.yml
+```
+
+Example output:
+
+```
+Score: 85 / 100
+Decision: PASS
+```
+
+---
+
+## GitHub Action
+
+Example workflow:
+
+```yaml
+name: SecScore PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run SecScore
+        uses: cassiodeveloper/secscore@v1
+        with:
+          sarif: results.sarif
+```
+
+---
+
+## Policy Driven Security
+
+Example policy:
+
+```yaml
+base_score: 100
+
+penalties:
+  high: 20
+  medium: 10
+  low: 5
+
+hard_fail:
+  - domain: sast
+    severity_in: ["critical"]
+    is_new: true
+```
+
+---
+
+## Examples
+
+Example SARIF files:
+
+examples/
+- example-snyk.sarif
+- example-checkmarx.sarif
+
+Example workflows:
+
+examples/workflows/
+- example-minimal.yml
+- example-snyk.yml
+- example-checkmarx.yml
+- example-checkmarx-api.yml
+- example-multi-scanner.yml
+
+---
+
+## Project Structure
+
+```
+secscore/
+   adapters/
+   cli/
+   core/
+   normalizers/
+   utils/
+
+examples/
+policy/
+schema/
+```
+
+---
+
+## Security
+
+If you discover a vulnerability in this project, please report it responsibly.
+
+See:  
+SECURITY.md
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read:
+
+CONTRIBUTING.md
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+[LICENSE](LICENSE)
+
+---
+
+## Philosophy
+
+Security scanners generate noise.
+
+SecScore focuses on what actually matters:
+
+**clear, automated security decisions in CI/CD pipelines.**
