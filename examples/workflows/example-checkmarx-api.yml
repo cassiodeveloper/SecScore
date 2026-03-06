@@ -1,0 +1,37 @@
+name: SecScore PR
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Scanner (exemplo)
+    - name: Run Checkmarx
+      uses: checkmarx/ast-github-action@v2
+      with:
+        project_name: ${{ github.repository }}
+        cx_tenant: ${{ secrets.CX_TENANT }}
+        base_uri: ${{ secrets.CX_BASE_URL }}
+        cx_client_id: ast-app
+        cx_client_secret: ${{ secrets.CX_TOKEN }}
+
+    # SecScore
+    - name: Run SecScore
+      uses: cassiodeveloper/secscore@v1
+      with:
+        provider: checkmarx
+        checkmarx-project: ${{ secrets.CX_PROJECT }}
+        checkmarx-base-url: ${{ secrets.CX_BASE_URL }}
+        checkmarx-token: ${{ secrets.CX_TOKEN }}
+        branch: ${{ github.head_ref }}

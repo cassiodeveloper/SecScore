@@ -1,0 +1,22 @@
+name: SecScore PR
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    # SecScore
+    - name: Run SecScore
+      uses: cassiodeveloper/secscore@v1
+      with:
+        sarif: cx_result.sarif
