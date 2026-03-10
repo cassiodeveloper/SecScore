@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml">
+        <meta name="robots" content="index, follow">
+
+        <title>SecScore | Security Score that matters for CI/CD</title>
+        <meta name="description" content="SecScore is an open-source security scoring engine for CI/CD pipelines. Convert SARIF findings into a single security score and decision for Pull Requests." />
+        <meta name="keywords" content="SecScore, DevSecOps, AppSec, SARIF, SAST, SCA, CI/CD, GitHub Actions, security score, pull request security, security scanning" />
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Cássio B. Pereira" />
+        <meta name="theme-color" content="#0b1020" />
+
+        <link rel="canonical" href="https://secscore.dev/" />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="SecScore | Security Score that matters for CI/CD" />
+        <meta property="og:description" content="Convert SARIF findings into a single security score and decision for Pull Requests." />
+        <meta property="og:url" content="https://secscore.dev/" />
+        <meta property="og:image" content="https://secscore.dev/og-image.png" />
+        <meta property="og:site_name" content="SecScore" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SecScore | Security Score that matters for CI/CD" />
+        <meta name="twitter:description" content="Open-source security scoring engine for CI/CD pipelines." />
+        <meta name="twitter:image" content="https://secscore.dev/og-image.png" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link ref="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+        <link rel="stylesheet" href="css/styles.css" />
+
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-3GSHG2W8EE"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-3GSHG2W8EE');
+        </script>        
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "SecScore",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Linux, macOS, Windows",
+            "description": "SecScore is an open-source security scoring engine for CI/CD pipelines that converts SARIF findings into a single score and decision for Pull Requests.",
+            "url": "https://secscore.dev/",
+            "codeRepository": "https://github.com/cassiodeveloper/SecScore",
+            "license": "https://github.com/cassiodeveloper/SecScore/blob/main/LICENSE",
+            "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+            }
+        }
+        </script>
+    </head>
+    <body>
+        <div class="bg-grid"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+        <header class="site-header">
+            <div class="container nav">
+            <a href="#top" class="brand" aria-label="SecScore home">
+                <svg width="360" height="120" viewBox="0 0 360 120" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .text { font-family: Inter, Arial, sans-serif; font-weight:700; fill:#edf3ff; }
+                        .sub { font-family: Inter, Arial, sans-serif; font-weight:600; fill:#8fa3bf; letter-spacing:2px; }
+                        .shield { fill:#0b1220; stroke:#56d6ff; stroke-width:3; }
+                        .gauge-bg { stroke:#243145; stroke-width:8; fill:none; stroke-linecap:round; }
+                        .gauge { stroke:#56d6ff; stroke-width:8; fill:none; stroke-linecap:round; }
+                        .needle { stroke:#edf3ff; stroke-width:4; stroke-linecap:round; }
+                    </style>
+                    <path class="shield"
+                    d="M60 8
+                    L95 20
+                    V48
+                    C95 72 80 92 60 104
+                    C40 92 25 72 25 48
+                    V20
+                    Z"/>
+                    <!-- gauge center -->
+                    <g transform="translate(60,60)">
+                        <!-- background arc -->
+                        <path class="gauge-bg"
+                        d="M -18 0
+                        A 18 18 0 0 1 18 0"/>
+                        <!-- active arc -->
+                        <path class="gauge"
+                        d="M -18 0
+                        A 18 18 0 0 1 8 -16"/>
+                        <!-- needle -->
+                        <line class="needle" x1="0" y1="0" x2="10" y2="-10"/>
+                        <!-- pivot -->
+                        <circle cx="0" cy="0" r="3" fill="#edf3ff"/>
+                    </g>
+                    <!-- text -->
+                    <text x="120" y="55" font-size="34" class="text">SecScore</text>
+                    <text x="120" y="80" font-size="12" class="sub">SECURITY SCORE ENGINE</text>
+                </svg>
+            </a>
+            <nav class="nav-links">
+                <a href="#how">How it works</a>
+                <a href="#features">Features</a>
+                <a href="#example">Example</a>
+                <a href="#install">Install</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+            <a class="btn btn-github" href="https://github.com/cassiodeveloper/SecScore" target="_blank" rel="noopener noreferrer">
+                <svg class="gh-icon" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8a8.013 8.013 0 0 0 5.47 7.59c.4.07.55-.17.55-.38
+                    0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                    -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87
+                    2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+                    0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12
+                    0 0 .67-.21 2.2.82a7.56 7.56 0 0 1 2-.27c.68 0 1.36.09 2 .27
+                    1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                    .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95
+                    .29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2
+                    0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8
+                    c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                <span>Star on GitHub</span>
+            </a>
+            </div>
+        </header>
+        <main id="top">
+            <section class="hero">
+                <div class="container hero-grid">
+                    <div class="hero-copy">
+                        <div class="eyebrow">Open-source security scoring for CI/CD</div>
+                        <h1>
+                            Stop shipping
+                            <span class="gradient-text">scanner noise</span>.
+                            Start making
+                            <span class="gradient-text">security decisions</span>.
+                        </h1>
+                        <p class="hero-lead">
+                            SecScore turns SARIF findings into a single score and a clear PR outcome:
+                            <strong>PASS</strong>, <strong>REVIEW</strong> or <strong>FAIL</strong>.
+                            Built for DevSecOps teams that want signal, not chaos.
+                        </p>
+                        <div class="hero-actions">
+                            <a class="btn btn-primary" href="https://github.com/cassiodeveloper/SecScore" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+                            <a class="btn btn-secondary" href="#example">See example</a>
+                        </div>
+                        <div class="hero-mini">
+                            <div class="mini-card">
+                            <span class="mini-label">Works with</span>
+                            <span class="mini-value">SARIF, Checkmarx API</span>
+                            </div>
+                            <div class="mini-card">
+                            <span class="mini-label">Designed for</span>
+                            <span class="mini-value">PR security decisions</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-panel">
+                        <div class="panel-window">
+                            <div class="window-top">
+                            <span></span><span></span><span></span>
+                            </div>
+                            <div class="score-card">
+                            <div class="score-head">
+                                <span class="badge">SecScore Engine</span>
+                                <span class="status-pill" id="decision-pill">REVIEW</span>
+                            </div>
+                            <div class="score-ring-wrap">
+                                <div class="score-ring">
+                                <div class="score-ring-inner">
+                                    <span id="score-number">82</span>
+                                    <small>/ 100</small>
+                                </div>
+                                </div>
+                            </div>
+                            <div class="score-lines">
+                                <div class="score-line">
+                                <span>SAST</span>
+                                <span>+2 findings</span>
+                                </div>
+                                <div class="score-line">
+                                <span>SCA</span>
+                                <span>0 findings</span>
+                                </div>
+                                <div class="score-line">
+                                <span>IaC</span>
+                                <span>+1 finding</span>
+                                </div>
+                                <div class="score-line">
+                                <span>Decision</span>
+                                <span>Manual Review</span>
+                                </div>
+                            </div>
+                            <pre class="terminal-snippet"><code>Scanner → SARIF → SecScore → PASS / REVIEW / FAIL</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="logo-strip">
+                <div class="container">
+                    <p>Built for teams using <strong>Snyk</strong>, <strong>Semgrep</strong>,<strong>CodeQL</strong>, <strong>Checkmarx</strong> and any scanner that speaks <strong>SARIF</strong>.</p>
+                </div>
+            </section>
+            <section class="section pr-example">
+                <div class="container">
+                    <div class="section-head center">
+                        <span class="section-kicker">Pull Request outcome</span>
+                        <h2>SecScore comments directly on your PR</h2>
+                        <p>Security findings translated into a clear merge decision.</p>
+                    </div>
+                    <div class="pr-grid">
+                        <div class="github-pr">
+                            <div class="gh-header">
+                                <span class="gh-bot">secscore-bot</span>
+                                <span class="gh-label">commented</span>
+                            </div>
+                            <div class="gh-comment">
+                                <div class="gh-score">
+                                    <span class="gh-decision pass">PASS</span>
+                                    <span class="gh-number">96</span>
+                                    <span class="gh-max">/100</span>
+                                </div>
+                                <p class="gh-text">No significant security risk detected.</p>
+                                <table class="gh-table">
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Findings</th>
+                                    </tr>
+                                    <tr>
+                                        <td>SAST</td>
+                                        <td>0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>SCA</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IaC</td>
+                                        <td>0</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="github-pr">
+                            <div class="gh-header">
+                                <span class="gh-bot">secscore-bot</span>
+                                <span class="gh-label">commented</span>
+                            </div>
+                            <div class="gh-comment">
+                                <div class="gh-score">
+                                    <span class="gh-decision review">REVIEW</span>
+                                    <span class="gh-number">72</span>
+                                    <span class="gh-max">/100</span>
+                                </div>
+                                <p class="gh-text">Security review recommended before merge.</p>
+                                <table class="gh-table">
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Findings</th>
+                                    </tr>
+                                    <tr>
+                                        <td>SAST</td>
+                                        <td>2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>SCA</td>
+                                        <td>0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IaC</td>
+                                        <td>1</td>
+                                    </tr>
+                                </table>
+                                <div class="gh-reasons">
+                                    <strong>Top reasons</strong>
+                                    <ul>
+                                        <li>1 High severity SAST finding</li>
+                                    </ul>
+                                </div>                                
+                            </div>
+                        </div>
+                        <div class="github-pr">
+                            <div class="gh-header">
+                                <span class="gh-bot">secscore-bot</span>
+                                <span class="gh-label">commented</span>
+                            </div>
+                            <div class="gh-comment">
+                                <div class="gh-score">
+                                    <span class="gh-decision fail">FAIL</span>
+                                    <span class="gh-number">41</span>
+                                    <span class="gh-max">/100</span>
+                                </div>
+                                <p class="gh-text">Security policy violation detected.</p>
+                                <table class="gh-table">
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Findings</th>
+                                    </tr>
+                                    <tr>
+                                        <td>SAST</td>
+                                        <td>1 Critical</td>
+                                    </tr>
+                                    <tr>
+                                        <td>SCA</td>
+                                        <td>2 High</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IaC</td>
+                                        <td>0</td>
+                                    </tr>
+                                </table>
+                                <div class="gh-reasons">
+                                    <strong>Top reasons</strong>
+                                    <ul>
+                                        <li>1 Critical severity SAST finding</li>
+                                        <li>2 High severity findings</li>
+                                    </ul>
+                                </div>                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>    
+            <section class="section before-after">
+                <div class="container">
+                    <span class="section-kicker">Why SecScore</span>
+                    <h2>From scanner noise to merge decision</h2>
+                    <p class="section-intro">Security scanners generate findings. SecScore converts them into a clear decision maker.</p>
+                    <div class="compare-grid">
+                        <div class="compare-card before">
+                            <h3>Before</h3>
+                            <ul>
+                                <li>Hundreds of scanner findings</li>
+                                <li>False positives everywhere</li>
+                                <li>No clear merge criteria</li>
+                                <li>Developers ignoring alerts</li>
+                                <li>Security teams manually reviewing</li>
+                            </ul>
+                        </div>
+                        <div class="compare-card after">
+                            <h3>After</h3>
+                            <ul>
+                                <li>Normalized findings</li>
+                                <li>Policy-based scoring</li>
+                                <li>Clear PASS / REVIEW / FAIL</li>
+                                <li>Top issues highlighted</li>
+                                <li>Automated CI/CD decision</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <p class="compare-tagline">SecScore is the missing decision layer between scanners and pull requests.</p>                   
+            </section>
+            <section id="how" class="section">
+                <div class="container">
+                    <div class="section-head">
+                    <span class="section-kicker">How it works</span>
+                    <h2>Scanners produce findings. SecScore produces decisions.</h2>
+                    <p>
+                        Security tools flood pipelines with alerts. SecScore sits on top of that mess
+                        and translates it into something a CI pipeline can actually enforce.
+                    </p>
+                    </div>
+                    <div class="flow">
+                    <div class="flow-item reveal">
+                        <span class="flow-num">01</span>
+                        <h3>Run your scanner</h3>
+                        <p>Use Snyk, CodeQL, Semgrep, Checkmarx or any SARIF-compatible tool.</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item reveal">
+                        <span class="flow-num">02</span>
+                        <h3>Feed SecScore</h3>
+                        <p>Pass SARIF directly or let SecScore fetch results from a provider.</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item reveal">
+                        <span class="flow-num">03</span>
+                        <h3>Apply policy</h3>
+                        <p>Severity, hard fails, ignore paths, multipliers and thresholds decide the score.</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item reveal">
+                        <span class="flow-num">04</span>
+                        <h3>Gate the PR</h3>
+                        <p>Return PASS, REVIEW or FAIL with a single number everyone understands.</p>
+                    </div>
+                    </div>
+                </div>
+            </section>
+            <section id="features" class="section section-alt">
+            <div class="container">
+                <div class="section-head">
+                <span class="section-kicker">Why SecScore</span>
+                <h2>Built to reduce AppSec friction, not increase it.</h2>
+                </div>
+                <div class="cards">
+                <article class="feature-card reveal">
+                    <div class="feature-icon">01</div>
+                    <h3>Policy-driven scoring</h3>
+                    <p>
+                    Security logic lives in policy, not in the scanner. Tune thresholds, penalties,
+                    hard fails and ignored paths to match your reality.
+                    </p>
+                </article>
+                <article class="feature-card reveal">
+                    <div class="feature-icon">02</div>
+                    <h3>SARIF first</h3>
+                    <p>
+                    Use the standard format most modern scanners already support.
+                    Less vendor lock-in. Less brittle integration.
+                    </p>
+                </article>
+                <article class="feature-card reveal">
+                    <div class="feature-icon">03</div>
+                    <h3>Made for Pull Requests</h3>
+                    <p>
+                    Score PRs, comment on findings, update status checks and support branch protection
+                    without turning the pipeline into a circus.
+                    </p>
+                </article>
+                <article class="feature-card reveal">
+                    <div class="feature-icon">04</div>
+                    <h3>Open-source core</h3>
+                    <p>
+                    Keep the engine transparent, inspectable and scriptable. No black-box scoring
+                    nonsense pretending to be science.
+                    </p>
+                </article>
+                <article class="feature-card reveal">
+                    <div class="feature-icon">05</div>
+                    <h3>Noise control</h3>
+                    <p>
+                    Ignore paths like <code>node_modules</code>, <code>vendor</code>,
+                    <code>dist</code> and other junk your team should not be penalized for.
+                    </p>
+                </article>
+                <article class="feature-card reveal">
+                    <div class="feature-icon">06</div>
+                    <h3>Security decisions, fast</h3>
+                    <p>
+                    Teams do not need more dashboards. They need a clear answer in the PR.
+                    SecScore gives one.
+                    </p>
+                </article>
+                </div>
+            </div>
+            </section>
+            <section class="section split-section">
+                <div class="container split-grid">
+                    <div class="split-copy reveal">
+                    <span class="section-kicker">What makes it different</span>
+                    <h2>Severity alone is lazy. Pipelines need context and thresholds.</h2>
+                    <p>
+                        A scanner says “there is a finding”. SecScore answers the only question that matters
+                        in a delivery workflow:
+                    </p>
+                    <div class="quote-box">
+                        <p>“Does this Pull Request deserve to pass, require review, or fail?”</p>
+                    </div>
+                    <ul class="check-list">
+                        <li>Single score from multiple findings</li>
+                        <li>Hard-fail rules for critical cases</li>
+                        <li>Support for provider mode and SARIF mode</li>
+                        <li>Designed to work with GitHub Actions, but not only.</li>
+                    </ul>
+                    </div>
+                    <div class="split-code reveal">
+                    <div class="code-card">
+                        <div class="code-card-head">
+                        <span>Minimal usage example</span>
+                        </div>
+                        <pre><code>- name: Run SecScore
+            uses: cassiodeveloper/SecScore@v0.1.0
+            with:
+                sarif: results.sarif</code></pre>
+                    </div>
+                    <div class="code-card">
+                        <div class="code-card-head">
+                        <span>Provider mode example</span>
+                        </div>
+                        <pre><code>- name: Run SecScore
+            uses: cassiodeveloper/SecScore@v0.1.0
+            with:
+                provider: checkmarx
+                checkmarx-project: ${{ secrets.CX_PROJECT }}
+                checkmarx-base-url: ${{ secrets.CX_BASE_URL }}
+                checkmarx-token: ${{ secrets.CX_TOKEN }}
+                branch: ${{ github.head_ref }}</code></pre>
+                    </div>
+                    </div>
+                </div>
+                </section>
+                <section id="example" class="section section-alt">
+                <div class="container">
+                    <div class="section-head">
+                    <span class="section-kicker">Example</span>
+                    <h2>From raw findings to a clear PR outcome.</h2>
+                    </div>
+                    <div class="example-grid">
+                    <div class="example-card reveal">
+                        <h3>Input example</h3>
+                        <pre><code>{
+            "scanner": "Snyk",
+            "format": "SARIF",
+            "findings": 3,
+            "severity": ["high", "medium", "medium"]
+            }</code></pre>
+                    </div>
+                    <div class="example-card reveal">
+                        <h3>Policy / Engine example</h3>
+                        <pre><code>base_score: 100
+            penalties:
+            high: 20
+            medium: 7
+            hard_fails:
+            - domain: sast
+                severity_in: ["critical"]</code></pre>
+                    </div>
+                    <div class="example-card reveal">
+                        <h3>Output example</h3>
+                        <pre><code>Score: 66
+            Decision: REVIEW
+
+            Top reasons:
+            - 1 high SAST finding
+            - 2 medium findings</code></pre>
+                    </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section vendors">
+                <div class="container">
+                    <span class="section-kicker">Compatibility</span>
+                    <h2>Works with your security scanners</h2>
+                    <p>SecScore consumes SARIF and normalized findings from common AppSec tools.</p>
+                    <div class="vendor-grid">
+                        <div class="vendor">Checkmarx</div>
+                        <div class="vendor">Snyk</div>
+                        <div class="vendor">Semgrep</div>
+                        <div class="vendor">CodeQL</div>
+                        <div class="vendor">KICS</div>
+                        <div class="vendor">Veracode</div>
+                        <div class="vendor">SARIF</div>
+                    </div>
+                </div>
+            </section>            
+            <section id="install" class="section">
+                <div class="container cta-panel reveal">
+                    <div>
+                        <span class="section-kicker">Open source</span>
+                        <h2>Install SecScore in your pipeline</h2>
+                        <p>SecScore is designed for teams that want a practical layer between scanners and merge decisions.</p>
+                    </div>
+                    <div class="cta-actions">
+                        <a class="btn btn-primary" href="https://github.com/cassiodeveloper/SecScore" target="_blank" rel="noopener noreferrer">Open GitHub Repository</a>
+                        <a class="btn btn-outline" href="https://github.com/cassiodeveloper/SecScore/blob/main/README.md" target="_blank" rel="noopener noreferrer">Read documentation</a>
+                        <a class="btn btn-marketplace" href="https://github.com/marketplace/actions/secscore" target="_blank" rel="noopener noreferrer">Install from GitHub Marketplace</a>
+                    </div>
+                </div>
+            </section>
+            <section id="faq" class="section section-alt">
+                <div class="container">
+                    <div class="section-head">
+                    <span class="section-kicker">FAQ</span>
+                    <h2>Fast answers for people who hate wasting time.</h2>
+                    </div>
+                    <div class="faq-list">
+                    <details class="faq-item reveal">
+                        <summary>Is SecScore a scanner?</summary>
+                        <p>No. SecScore is a decision engine. It consumes findings from scanners and calculates a score plus a final PR decision.</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>Does it work only with Checkmarx?</summary>
+                        <p>No. SARIF is the preferred path, which makes SecScore compatible with multiple scanners. Checkmarx API support is just one provider mode.</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>Can I define my own security policy?</summary>
+                        <p>Yes. The score, thresholds, penalties, hard-fail rules and ignored paths are all policy-driven.</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>Can it be used with branch protection?</summary>
+                        <p>Yes. That is one of the core use cases: publish a status check and use it in GitHub branch protection rules.</p>
+                    </details>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="site-footer">
+            <div class="container footer-grid">
+            <div>
+                <a href="#top" class="brand" aria-label="SecScore home">
+                    <svg width="360" height="120" viewBox="0 0 360 120" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .text { font-family: Inter, Arial, sans-serif; font-weight:700; fill:#edf3ff; }
+                            .sub { font-family: Inter, Arial, sans-serif; font-weight:600; fill:#8fa3bf; letter-spacing:2px; }
+                            .shield { fill:#0b1220; stroke:#56d6ff; stroke-width:3; }
+                            .gauge-bg { stroke:#243145; stroke-width:8; fill:none; stroke-linecap:round; }
+                            .gauge { stroke:#56d6ff; stroke-width:8; fill:none; stroke-linecap:round; }
+                            .needle { stroke:#edf3ff; stroke-width:4; stroke-linecap:round; }
+                        </style>
+                        <path class="shield"
+                        d="M60 8
+                        L95 20
+                        V48
+                        C95 72 80 92 60 104
+                        C40 92 25 72 25 48
+                        V20
+                        Z"/>
+                        <!-- gauge center -->
+                        <g transform="translate(60,60)">
+                            <!-- background arc -->
+                            <path class="gauge-bg"
+                            d="M -18 0
+                            A 18 18 0 0 1 18 0"/>
+                            <!-- active arc -->
+                            <path class="gauge"
+                            d="M -18 0
+                            A 18 18 0 0 1 8 -16"/>
+                            <!-- needle -->
+                            <line class="needle" x1="0" y1="0" x2="10" y2="-10"/>
+                            <!-- pivot -->
+                            <circle cx="0" cy="0" r="3" fill="#edf3ff"/>
+                        </g>
+                        <!-- text -->
+                        <text x="120" y="55" font-size="34" class="text">SecScore</text>
+                        <text x="120" y="80" font-size="12" class="sub">SECURITY SCORE ENGINE</text>
+                    </svg>
+                </a>
+                <p class="footer-copy">Security Score that matters.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://cassiodeveloper.com.br/en" target="_blank" rel="noopener noreferrer" title="Cássio B. Pereira">By: Cássio B. Pereira</a>
+                <a href="https://github.com/cassiodeveloper/SecScore" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://github.com/cassiodeveloper/SecScore/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+                <a href="https://github.com/cassiodeveloper/SecScore/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+            </div>
+            </div>
+        </footer>
+        <script src="js/main.js" defer></script>
+    </body>
+</html>

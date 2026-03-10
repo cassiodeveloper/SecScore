@@ -1,0 +1,33 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SecScore Test Scanner"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TEST003",
+          "level": "error",
+          "message": {
+            "text": "User input flows into HTML response without encoding"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/controllers/userController.js"
+                },
+                "region": {
+                  "startLine": 27
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

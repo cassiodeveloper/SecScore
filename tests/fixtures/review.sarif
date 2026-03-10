@@ -1,0 +1,90 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SecScore Test Scanner"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TEST-MED-001",
+          "level": "warning",
+          "message": {
+            "text": "SQL query built using user input"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/db/userRepository.js"
+                },
+                "region": {
+                  "startLine": 52
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TEST-MED-002",
+          "level": "warning",
+          "message": {
+            "text": "Potential path traversal risk"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/controllers/fileController.js"
+                },
+                "region": {
+                  "startLine": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TEST-MED-003",
+          "level": "warning",
+          "message": {
+            "text": "Unvalidated redirect"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/controllers/authController.js"
+                },
+                "region": {
+                  "startLine": 88
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TEST-MED-004",
+          "level": "warning",
+          "message": {
+            "text": "Unvalidated redirect"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/controllers/dbController.js"
+                },
+                "region": {
+                  "startLine": 88
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

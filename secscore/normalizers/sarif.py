@@ -26,7 +26,7 @@ def normalize_sarif(path: str):
                 asset_path = artifact.get("uri")
                 asset_line = region.get("startLine")
 
-            severity = map_severity(result.get("level"))
+            severity = map_severity(result.get("level") or result.get("properties", {}).get("severity"))
 
             findings.append({
                 "id": result.get("ruleId"),
