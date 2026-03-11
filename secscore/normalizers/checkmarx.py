@@ -1,59 +1,161 @@
-import json
+import requests
+import time
+from secscore.normalizers.checkmarx import normalize
+
+MAX_WAIT = 120
+POLL_INTERVAL = 5
+WAIT_STATUSES = {"Queued", "Running"}
+SOURCE_ORIGINS = "Azure DevOps, Bitbucket, AzurePipelines, Push Webhook, PR Webhook, Gitlab, Github Action, GitHub"
+
+# FIX: página menor para manter cada request dentro dos limites da API.
+# O loop de paginação abaixo consolida todos os resultados.
+_PAGE_SIZE = 100
 
 
-def normalize(data):
+def fetch_findings(args):
 
-    findings = []
+    token = get_access_token(args.checkmarx_tenant, args.checkmarx_token)
 
-    for r in data.get("results", []):
+    scan_id = get_latest_scan(args.checkmarx_base_url, token, args.checkmarx_project, args.branch)
 
-        node = None
+    if not scan_id:
+        return {"findings": []}
 
-        nodes = r.get("nodes") or []
-        node = nodes[0] if nodes else None
+    raw = get_results(args.checkmarx_base_url, token, scan_id)
 
-        finding = {
-            "id": r.get("resultHash"),
-            "title": r.get("queryName"),
-            "severity": r.get("severity", "").lower(),
-            "domain": "sast",
-            "asset": {
-                "path": node.get("fileName") if node else None,
-                "line": node.get("line") if node else None
-            },
-            "metadata": {
-                "cwe": r.get("cweID"),
-                "cvss": r.get("cvssScore"),
-                "language": r.get("languageName")
-            }
-        }
+    return normalize(raw)
 
-        findings.append(finding)
+def get_access_token(tenant, refresh_token):
 
-    return findings
+    url = f"https://eu.iam.checkmarx.net/auth/realms/{tenant}/protocol/openid-connect/token"
 
-
-# opcional: modo CLI para debug
-def normalize_file(input_file, output_file):
-
-    with open(input_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    findings = normalize(data)
-
-    out = {
-        "findings": findings
+    payload = {
+        "grant_type": "refresh_token",
+        "client_id": "ast-app",
+        "refresh_token": refresh_token
     }
 
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(out, f, indent=2)
+    r = requests.post(url, data=payload)
+    r.raise_for_status()
 
-if __name__ == "__main__":
+    return r.json()["access_token"]
 
-    import sys
+def get_latest_scan(base_url, token, project, branch):
+    url = f"{base_url}/api/scans"
 
-    if len(sys.argv) != 3:
-        print("Usage: checkmarx.py input.json output.json")
-        sys.exit(1)
+    params = {
+        "branch": branch,
+        "project-names": project,
+        "statuses": "Completed,Queued,Running",
+        "source-origins": SOURCE_ORIGINS,
+        "limit": 20
+    }
 
-    normalize_file(sys.argv[1], sys.argv[2])
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json; version=1.0"
+    }
+
+    waited = 0
+
+    while True:
+        r = requests.get(url, headers=headers, params=params)
+        r.raise_for_status()
+
+        data = r.json()
+
+        if data.get("filteredTotalCount", 0) == 0:
+            return None
+
+        scans = data.get("scans", [])
+
+        latest_sast_any = None
+        latest_sast_completed = None
+
+        for scan in scans:
+            configs = scan.get("metadata", {}).get("configs", [])
+            is_sast = any((c.get("type") or "").lower() == "sast" for c in configs)
+
+            if not is_sast:
+                continue
+
+            if latest_sast_any is None:
+                latest_sast_any = scan
+
+            if latest_sast_completed is None and scan.get("status") == "Completed":
+                latest_sast_completed = scan
+
+            if latest_sast_any and latest_sast_completed:
+                break
+
+        if not latest_sast_any:
+            raise Exception("No SAST scans found")
+
+        latest_status = latest_sast_any.get("status")
+
+        if latest_status == "Completed":
+            return latest_sast_any["id"]
+
+        if latest_status in WAIT_STATUSES:
+            if waited >= MAX_WAIT:
+                break
+
+            print(f"SAST scan {latest_sast_any['id']} status {latest_status}, waiting...")
+            time.sleep(POLL_INTERVAL)
+            waited += POLL_INTERVAL
+            continue
+
+        if latest_sast_completed:
+            return latest_sast_completed["id"]
+
+        raise Exception("No valid completed SAST scan available")
+
+    # timeout: usar último completed encontrado
+    if latest_sast_completed:
+        print(f"Timeout waiting for latest SAST scan. Falling back to completed scan {latest_sast_completed['id']}")
+        return latest_sast_completed["id"]
+
+    raise Exception("No completed SAST scan available")
+
+def get_results(base_url, token, scan_id):
+    """
+    FIX: a versão anterior usava limit=1000 sem paginação, perdendo
+    silenciosamente todos os resultados além do milésimo finding.
+    Agora itera por páginas até esgotar totalCount.
+    """
+    url = f"{base_url}/api/sast-results"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json; version=1.0"
+    }
+
+    all_results = []
+    offset = 0
+
+    while True:
+        params = {
+            "scan-id": scan_id,
+            "include-nodes": "true",
+            "apply-predicates": "true",
+            "offset": offset,
+            "limit": _PAGE_SIZE,
+        }
+
+        r = requests.get(url, headers=headers, params=params)
+        r.raise_for_status()
+
+        data = r.json()
+        page_results = data.get("results", [])
+        all_results.extend(page_results)
+
+        total = data.get("totalCount", 0)
+
+        # Se a página veio vazia ou já coletamos tudo, para.
+        if not page_results or len(all_results) >= total:
+            break
+
+        offset += _PAGE_SIZE
+
+    # Retorna no mesmo formato que o normalize() espera.
+    return {"results": all_results}

@@ -4,10 +4,33 @@ from typing import List, Dict, Any, Tuple
 
 HUNK_REGEX = re.compile(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
+# Regex de validação para base_ref: permite refs git válidos
+# (branches, tags, SHAs) sem caracteres perigosos para o shell.
+_SAFE_REF_RE = re.compile(r'^[\w][\w/.\-]*$')
+
 WINDOW = 10
 
 
+def _validate_ref(ref: str) -> str:
+    """
+    Valida que o ref git é seguro antes de passá-lo ao subprocess.
+    Levanta ValueError se o valor contiver caracteres inesperados.
+    """
+    ref = ref.strip()
+    if not ref:
+        raise ValueError("base_ref não pode ser vazio.")
+    if not _SAFE_REF_RE.match(ref):
+        raise ValueError(
+            f"base_ref contém caracteres inválidos: {ref!r}. "
+            "Apenas letras, números, '/', '.', '-' e '_' são permitidos."
+        )
+    return ref
+
+
 def get_changed_ranges(base_ref: str = "origin/main") -> Dict[str, List[Tuple[int, int]]]:
+    # FIX: validar base_ref antes de passá-lo ao subprocess para evitar
+    # injeção de comandos via variável de ambiente no CI.
+    base_ref = _validate_ref(base_ref)
 
     diff = subprocess.check_output(
         ["git", "diff", "--unified=0", base_ref, "HEAD"],

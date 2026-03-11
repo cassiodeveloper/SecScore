@@ -2,7 +2,7 @@ name: SecScore PR
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 permissions:
   contents: read
@@ -14,21 +14,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        # Necessário para diff-aware: busca histórico completo
+        fetch-depth: 0
 
-      # Scanner (exemplo)
-      - name: Run Semgrep
-        run: semgrep --sarif --output semgrep.sarif
+    - name: Run Semgrep
+      run: semgrep --sarif --output semgrep.sarif
 
-      - name: Run Trivy
-        run: trivy fs --format sarif -o trivy.sarif .
+    - name: Run Trivy
+      run: trivy fs --format sarif -o trivy.sarif .
 
-      - name: Merge SARIF
-        run: |
-            jq -s '{runs: map(.runs[]) }' semgrep.sarif trivy.sarif > security.sarif
-
-      # SecScore
-      - name: Run SecScore
-        uses: cassiodeveloper/secscore@v1
-        with:
-          sarif: security.sarif
+    # v0.3.0 — múltiplos SARIFs passados diretamente, sem jq
+    - name: Run SecScore
+      uses: cassiodeveloper/secscore@v1
+      with:
+        sarif: "semgrep.sarif,trivy.sarif"
+        # diff-aware ativo por padrão — para desativar:
+        # no_diff_aware: "true"

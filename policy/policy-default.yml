@@ -1,4 +1,4 @@
-policy_version: "1.0"
+policy_version: "1.1"
 mode: "pull_request"
 
 decision:
@@ -41,7 +41,7 @@ hard_fails:
     domain: "sast"
     severity_in: [ "critical", "high" ]
     is_new: true
-  reason: "High confidence new critical SAST finding"
+  reason: "New critical/high SAST finding"
 
 - id: "SCA_RUNTIME_CRIT_OR_HIGH"
   when:
@@ -64,7 +64,7 @@ hard_fails:
     domain: "iac"
     severity_in: [ "critical" ]
     is_new: true
-  reason: "New IaC cxritical finding"
+  reason: "New critical IaC finding"
 
 - id: "SECRET_LEAK"
   when:
@@ -91,3 +91,11 @@ reporting:
 suppressions:
   allow_tags: []
   deny_rule_ids: []
+  # v0.3.0 — supressão por fingerprint de finding específico.
+  # Use para suprimir falsos positivos confirmados de forma rastreável.
+  # Obtenha o fingerprint em secscore-result.json > hard_fails[].finding_fingerprint
+  # Exemplo:
+  # deny_fingerprints:
+  #   - "abc123def456"
+  #   - "7890abcdef12"
+  deny_fingerprints: []
