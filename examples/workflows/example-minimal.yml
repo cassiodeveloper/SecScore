@@ -15,8 +15,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     # SecScore
     - name: Run SecScore
       uses: cassiodeveloper/secscore@v1
       with:
-        sarif: cx_result.sarif
+        sarif: results.sarif

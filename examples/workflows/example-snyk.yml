@@ -1,8 +1,28 @@
-- name: Run Snyk
-  run: |
-    snyk code test --sarif-file-output=snyk.sarif
+name: SecScore + Snyk
 
-- name: Run SecScore
-  uses: cassiodeveloper/secscore@v1
-  with:
-    sarif: snyk.sarif
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  secscore:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Snyk Code
+        run: |
+          snyk code test --sarif-file-output=snyk.sarif
+
+      - name: Run SecScore
+        uses: cassiodeveloper/secscore@v1
+        with:
+          sarif: snyk.sarif

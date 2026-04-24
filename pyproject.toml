@@ -1,17 +1,18 @@
-[build-system]
+﻿[build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "secscore"
-version = "0.1.0"
+version = "0.4.0"
 description = "Security score engine for CI/CD pipelines"
 requires-python = ">=3.9"
-authors = [{name="Cássio B. Pereira"}]
+authors = [{name="Cassio B. Pereira"}]
 
 dependencies = [
-    "pyyaml",
-    "requests"
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "rich>=13.0.0"
 ]
 
 [tool.setuptools.packages.find]

@@ -1,4 +1,4 @@
-![CI](https://github.com/cassiodeveloper/secscore/actions/workflows/ci.yml/badge.svg)
+﻿![CI](https://github.com/cassiodeveloper/secscore/actions/workflows/ci.yml/badge.svg)
 ![GitHub release](https://img.shields.io/github/v/release/cassiodeveloper/secscore)
 ![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -10,141 +10,138 @@
 
 **A pontuação de segurança que importa.**
 
-```
-Scanner de Segurança
-       ↓
-      SARIF
-       ↓
-    SecScore
-       ↓
- PASS / REVIEW / FAIL
-```
-
-SecScore é um motor leve de pontuação de segurança para pipelines CI/CD.
-Ele avalia findings gerados por scanners de segurança e calcula **uma pontuação única de segurança para um Pull Request**, permitindo que equipes decidam automaticamente se a mudança deve **PASSAR, exigir REVISÃO ou FALHAR**.
-
-A ferramenta é agnóstica a scanners e funciona com **SARIF**, sendo compatível com a maioria das ferramentas modernas de segurança.
+SecScore é um motor de decisão de segurança para CI/CD.
+Ele transforma findings de scanners em uma decisão objetiva de PR: **PASS / REVIEW / FAIL**.
 
 ---
 
-## Por que SecScore
+## Principais recursos
 
-Scanners de segurança geram findings.
-Mas pipelines precisam de **decisões**.
-
-```
-Scanner → Findings → SecScore → Score → Decisão
-
-Score: 82 / 100
-Decisão: REVIEW
-```
-
----
-
-## Principais Recursos
-
-- Pontuação de segurança para Pull Requests
+- Score de segurança para Pull Requests
 - Regras de hard fail para vulnerabilidades críticas
-- Compatível com SARIF (Snyk, CodeQL, Semgrep, Checkmarx, etc.)
-- Suporte a múltiplos SARIFs — passe saídas de vários scanners em uma única execução
-- Filtro diff-aware — avalia apenas findings introduzidos no PR
-- Supressão por fingerprint — suprima falsos positivos confirmados de forma rastreável
-- Pronto para GitHub Actions
-- Decisões baseadas em policy
-- Leve e rápido
-- Open source
+- Compatível com SARIF (Snyk, CodeQL, Semgrep, Checkmarx, Trivy, etc.)
+- Suporte a múltiplos SARIFs
+- Filtro diff-aware (ativado por padrão)
+- Supressão por fingerprint
+- Integração opcional com M.A.R.I.A (`/api/secscore/submissions`)
+- GitHub Action pronta para uso
 
 ---
 
-## Como Funciona
+## Executando localmente
 
-```
-Scanner de Segurança
-       ↓
-      SARIF
-       ↓
-  Parser do SecScore
-       ↓
-  Motor de Policy
-       ↓
- Cálculo de Score
-       ↓
- PASS / REVIEW / FAIL
-```
+## Quickstart em 5 minutos
 
-Scanners suportados:
+1. Execute com SARIF + policy:
 
-- [x] Snyk
-- [x] Semgrep
-- [x] CodeQL
-- [x] Checkmarx
-- [x] Trivy
-- [x] Qualquer scanner compatível com SARIF
-
-## Entradas Suportadas
-
-| Scanner       | Formato      |
-|---------------|--------------|
-| Snyk          | SARIF        |
-| CodeQL        | SARIF        |
-| Semgrep       | SARIF        |
-| Checkmarx     | SARIF        |
-| Checkmarx API | JSON         |
-
----
-
-## Instalação
-
-Clone o repositório:
-
-```
-git clone https://github.com/cassiodeveloper/secscore
-cd secscore
-```
-
-Instale as dependências:
-
-```
-pip install -r requirements.txt
-```
-
----
-
-## Executando Localmente
-
-Arquivo SARIF único:
-
-```
+```bash
 python -m secscore.cli.main pr \
-  --sarif examples/example-snyk.sarif \
+  --sarif tests/fixtures/review.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
 ```
 
-M�ltiplos arquivos SARIF (v0.3.0+):
+2. Confira os artefatos:
+- `pr-comment.md` (resumo para comentário de PR)
+- `secscore-result.json` (resultado estruturado)
 
+3. Opcional: enviar para M.A.R.I.A:
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --maria-url http://localhost:5213/api/secscore/submissions \
+  --maria-repository-id 11111111-2222-3333-4444-555555555555 \
+  --token YOUR_MARIA_TOKEN \
+  --no-diff-aware
 ```
+
+---
+
+## Cenários copiar e colar
+
+Use estes comandos para validar rapidamente os comportamentos esperados:
+
+### PASS
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/pass.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Esperado: `Decision: PASS`
+
+### REVIEW
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Esperado: `Decision: REVIEW`
+
+### FAIL
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/fail.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Esperado: `Decision: FAIL`
+
+---
+
+## Quando usar cada modo
+
+| Modo | Quando usar | Flags obrigatórias |
+|------|-------------|--------------------|
+| SARIF (`--sarif`) | Você já gerou SARIF no CI | `--sarif`, `--policy` |
+| Findings JSON (`--findings`) | Você já possui findings normalizados em JSON | `--findings`, `--policy` |
+| Provider (`--provider checkmarx`) | Você quer que o SecScore busque findings direto da API do provider | `--provider checkmarx`, flags do provider, `--policy` |
+
+---
+
+Exemplo com SARIF:
+
+```bash
 python -m secscore.cli.main pr \
   --sarif semgrep.sarif,trivy.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
 ```
 
-> **Nota:** use `--no-diff-aware` ao rodar localmente sem histórico git completo.
-> Em CI, o filtro diff-aware é ativado por padrão e requer `fetch-depth: 0` no passo de checkout.
+Exemplo com envio para M.A.R.I.A:
 
-Saída esperada:
+```bash
+python -m secscore.cli.main pr \
+  --sarif semgrep.sarif,trivy.sarif \
+  --policy policy/policy-pr.yml \
+  --maria-url https://demo.mariaappsec.com/api/secscore/submissions \
+  --maria-repository-id 11111111-2222-3333-4444-555555555555 \
+  --token YOUR_MARIA_TOKEN \
+  --no-diff-aware
+```
 
-```
-Score: 85 / 100
-Decisão: PASS
-```
+Para `/api/secscore/submissions`, o SecScore envia `Score`, `Decision`, `Summary` e preenche automaticamente metadados de pipeline/commit/branch.
+
+Flags úteis de override:
+- `--maria-submission-key`
+- `--maria-commit-sha`
+- `--maria-branch-name`
+- `--maria-pipeline-name`
+- `--maria-pipeline-run-id`
+- `--maria-pull-request-id`
 
 ---
 
 ## GitHub Action
-
-Exemplo mínimo:
 
 ```yaml
 - uses: actions/checkout@v4
@@ -154,31 +151,17 @@ Exemplo mínimo:
 - name: Run SecScore
   uses: cassiodeveloper/secscore@v1
   with:
-    sarif: results.sarif
-```
-
-M�ltiplos scanners (v0.3.0+):
-
-```yaml
-- name: Run SecScore
-  uses: cassiodeveloper/secscore@v1
-  with:
     sarif: "semgrep.sarif,trivy.sarif"
-```
-
-Desativar diff-aware:
-
-```yaml
-- name: Run SecScore
-  uses: cassiodeveloper/secscore@v1
-  with:
-    sarif: results.sarif
-    no_diff_aware: "true"
+    maria-url: "https://demo.mariaappsec.com/api/secscore/submissions"
+    maria-repository-id: "11111111-2222-3333-4444-555555555555"
+    maria-token: ${{ secrets.MARIA_TOKEN }}
 ```
 
 ---
 
-## Segurança Orientada por Policy
+## Política (policy)
+
+### Policy mínima
 
 ```yaml
 base_score: 100
@@ -198,89 +181,52 @@ hard_fails:
     reason: "Novo finding SAST crítico/alto"
 ```
 
-### Suprimindo falsos positivos por fingerprint (v0.3.0+)
+### Policy recomendada (exemplo)
 
 ```yaml
-suppressions:
-  deny_fingerprints:
-    - "abc123def456"   # falso positivo confirmado — XSS em helper de testes
-```
+scoring:
+  base_score: 100
+  penalties:
+    critical: 40
+    high: 20
+    medium: 7
+    low: 2
+  multipliers:
+    confidence:
+      high: 1.0
+      medium: 0.8
+      low: 0.5
 
-Obtenha o fingerprint em `secscore-result.json > hard_fails[].finding_fingerprint`.
+decision:
+  pass_min_score: 85
+  review_min_score: 51
 
----
+hard_fails:
+  - id: CRITICAL_NEW
+    when:
+      severity_in: ["critical"]
+      is_new: true
+    reason: "Novo finding crítico"
 
-## Exemplos
-
-Arquivos SARIF de exemplo:
-
-```
-examples/
-  example-snyk.sarif
-  example-checkmarx.sarif
-```
-
-Workflows de exemplo:
-
-```
-examples/workflows/
-  example-minimal.yml
-  example-snyk.yml
-  example-checkmarx.yml
-  example-checkmarx-api.yml
-  example-multi-scanner.yml
-```
-
----
-
-## Estrutura do Projeto
-
-```
-secscore/
-  adapters/
-  cli/
-  core/
-  normalizers/
-  utils/
-
-examples/
-policy/
-schema/
+ignore_paths:
+  - "node_modules/**"
+  - "dist/**"
 ```
 
 ---
 
-## Segurança
+## Troubleshooting
 
-Caso você encontre uma vulnerabilidade neste projeto, reporte de forma responsável.
-
-[SECURITY.md](SECURITY.md)
-
----
-
-## Contribuição
-
-Contribuições são bem-vindas. Leia primeiro:
-
-[CONTRIBUTING.md](CONTRIBUTING.md)
+- `404 Not Found` no M.A.R.I.A: rota incorreta; use `/api/secscore/submissions`.
+- `400 Bad Request` no M.A.R.I.A: contrato de payload inválido (campos obrigatórios ausentes/incorretos).
+- `401 Unauthorized` no M.A.R.I.A: token inválido para o ambiente.
+- `403 Forbidden` no M.A.R.I.A: token válido, mas sem escopo/acesso ao repositório alvo.
+- Aviso `Diff-aware skipped`: esperado localmente sem histórico git completo; use `--no-diff-aware`.
 
 ---
 
 ## Licença
 
-Este projeto é licenciado sob a **PolyForm Noncommercial License 1.0.0**.
+Este projeto usa **PolyForm Noncommercial License 1.0.0**.
 
-Uso não-comercial é livre. Uso comercial — incluindo incorporação em produto,
-serviço ou plataforma pagos — requer permissão explícita do autor.
-
-[LICENSE](LICENSE) · [polyformproject.org/licenses/noncommercial/1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
-
----
-
-## Filosofia
-
-Scanners de segurança geram ruído.
-
-O SecScore foca no que realmente importa:
-
-**decisões de segurança claras e automatizadas em pipelines CI/CD.**
+[LICENSE](LICENSE)

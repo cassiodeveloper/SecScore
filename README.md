@@ -49,6 +49,7 @@ Decision: REVIEW
 - Multi-SARIF support — pass multiple scanner outputs in one run
 - Diff-aware filtering — evaluates only findings introduced in the PR
 - Suppressions by fingerprint — suppress confirmed false positives traceably
+- Optional M.A.R.I.A integration — submits SecScore decision payload (`Score`, `Decision`, `Summary`) after analysis
 - GitHub Action ready
 - Policy-driven security decisions
 - Lightweight and fast
@@ -110,6 +111,84 @@ pip install -r requirements.txt
 
 ---
 
+## 5-Minute Quickstart
+
+1. Run with SARIF and policy:
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+2. Check outputs:
+- `pr-comment.md` (PR-ready markdown summary)
+- `secscore-result.json` (structured result)
+
+3. Optional: submit result to M.A.R.I.A:
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --maria-url http://localhost:5213/api/secscore/submissions \
+  --maria-repository-id 11111111-2222-3333-4444-555555555555 \
+  --token YOUR_MARIA_TOKEN \
+  --no-diff-aware
+```
+
+---
+
+## Copy/Paste Scenarios
+
+Use these commands to validate expected outcomes quickly:
+
+### PASS
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/pass.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Expected: `Decision: PASS`
+
+### REVIEW
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Expected: `Decision: REVIEW`
+
+### FAIL
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif tests/fixtures/fail.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware
+```
+
+Expected: `Decision: FAIL`
+
+---
+
+## Choose Input Mode
+
+| Mode | When to use | Required flags |
+|------|-------------|----------------|
+| SARIF (`--sarif`) | You already generated scanner SARIF files in CI | `--sarif`, `--policy` |
+| Findings JSON (`--findings`) | You already have normalized findings JSON | `--findings`, `--policy` |
+| Provider (`--provider checkmarx`) | You want SecScore to fetch findings directly from provider API | `--provider checkmarx`, provider flags, `--policy` |
+
+---
+
 ## Running Locally
 
 Single SARIF file:
@@ -129,6 +208,39 @@ python -m secscore.cli.main pr \
   --policy policy/policy-pr.yml \
   --no-diff-aware
 ```
+
+Send consolidated findings to M.A.R.I.A (token provided at invocation):
+
+```bash
+python -m secscore.cli.main pr \
+  --sarif semgrep.sarif,trivy.sarif \
+  --policy policy/policy-pr.yml \
+  --maria-url https://demo.mariaappsec.com/api/secscore/submissions \
+  --maria-repository-id 11111111-2222-3333-4444-555555555555 \
+  --token YOUR_MARIA_TOKEN \
+  --no-diff-aware
+```
+
+For `/api/secscore/submissions`, SecScore auto-fills required submission fields
+(`Score`, `Decision`, `Summary`, `CommitSha`, `BranchName`, `PipelineName`, `PipelineRunId`, `SubmissionKey`).
+You can override them with:
+`--maria-submission-key`, `--maria-commit-sha`, `--maria-branch-name`, `--maria-pipeline-name`, `--maria-pipeline-run-id`, `--maria-pull-request-id`.
+
+For local PR testing without opening a real PR:
+
+```bash
+SECSCORE_PULL_REQUEST_ID=local-pr-001 python -m secscore.cli.main pr \
+  --sarif semgrep.sarif \
+  --policy policy/policy-pr.yml \
+  --maria-url http://localhost:5213/api/secscore/submissions \
+  --maria-repository-id 11111111-2222-3333-4444-555555555555 \
+  --token YOUR_MARIA_TOKEN \
+  --no-diff-aware
+```
+
+In GitHub Actions, SecScore auto-detects the pull request number from the
+`pull_request` event. Other CI variables supported: `CI_MERGE_REQUEST_IID`,
+`CI_MERGE_REQUEST_ID`, `SYSTEM_PULLREQUEST_PULLREQUESTID`, and `BITBUCKET_PR_ID`.
 
 > **Note:** use `--no-diff-aware` when running locally without a full git history.
 > In CI, diff-aware is enabled by default and requires `fetch-depth: 0` in the checkout step.
@@ -164,6 +276,9 @@ Multiple scanners (v0.3.0+):
   uses: cassiodeveloper/secscore@v1
   with:
     sarif: "semgrep.sarif,trivy.sarif"
+    maria-url: "https://demo.mariaappsec.com/api/secscore/submissions"
+    maria-repository-id: "11111111-2222-3333-4444-555555555555"
+    maria-token: ${{ secrets.MARIA_TOKEN }}
 ```
 
 Disable diff-aware:
@@ -179,6 +294,8 @@ Disable diff-aware:
 ---
 
 ## Policy-Driven Security
+
+### Minimal policy
 
 ```yaml
 base_score: 100
@@ -198,6 +315,38 @@ hard_fails:
     reason: "New critical/high SAST finding"
 ```
 
+### Recommended policy (example)
+
+```yaml
+scoring:
+  base_score: 100
+  penalties:
+    critical: 40
+    high: 20
+    medium: 7
+    low: 2
+  multipliers:
+    confidence:
+      high: 1.0
+      medium: 0.8
+      low: 0.5
+
+decision:
+  pass_min_score: 85
+  review_min_score: 51
+
+hard_fails:
+  - id: CRITICAL_NEW
+    when:
+      severity_in: ["critical"]
+      is_new: true
+    reason: "New critical finding"
+
+ignore_paths:
+  - "node_modules/**"
+  - "dist/**"
+```
+
 ### Suppressing false positives by fingerprint (v0.3.0+)
 
 ```yaml
@@ -207,6 +356,16 @@ suppressions:
 ```
 
 Obtain the fingerprint from `secscore-result.json > hard_fails[].finding_fingerprint`.
+
+---
+
+## Troubleshooting
+
+- `404 Not Found` on M.A.R.I.A: endpoint path is wrong; use `/api/secscore/submissions`.
+- `400 Bad Request` on M.A.R.I.A: payload contract mismatch (required submission fields missing/invalid).
+- `401 Unauthorized` on M.A.R.I.A: invalid token format/value for that environment.
+- `403 Forbidden` on M.A.R.I.A: token valid but missing scope/resource access to the target repository.
+- `Diff-aware skipped` warning: expected locally without full git history; use `--no-diff-aware`.
 
 ---
 

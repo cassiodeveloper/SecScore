@@ -1,8 +1,8 @@
-name: SecScore PR
+name: SecScore Multi-Scanner PR
 
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -14,21 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        # Necessário para diff-aware: busca histórico completo
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Run Semgrep
-      run: semgrep --sarif --output semgrep.sarif
+      - name: Run Semgrep
+        run: semgrep --sarif --output semgrep.sarif
 
-    - name: Run Trivy
-      run: trivy fs --format sarif -o trivy.sarif .
+      - name: Run Trivy
+        run: trivy fs --format sarif -o trivy.sarif .
 
-    # v0.3.0 — múltiplos SARIFs passados diretamente, sem jq
-    - name: Run SecScore
-      uses: cassiodeveloper/secscore@v1
-      with:
-        sarif: "semgrep.sarif,trivy.sarif"
-        # diff-aware ativo por padrão — para desativar:
-        # no_diff_aware: "true"
+      - name: Run SecScore
+        uses: cassiodeveloper/secscore@v1
+        with:
+          sarif: "semgrep.sarif,trivy.sarif"
+          # Optional M.A.R.I.A submission:
+          # maria-url: ${{ secrets.MARIA_URL }}
+          # maria-repository-id: ${{ secrets.MARIA_REPOSITORY_ID }}
+          # maria-token: ${{ secrets.MARIA_TOKEN }}
+

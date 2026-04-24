@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to SecScore will be documented in this file.
 
@@ -6,7 +6,33 @@ The format is based on semantic versioning and follows a simple chronological re
 
 ---
 
-## v0.3.0 — 2026-03
+## v0.4.0 — 2026-04
+
+### Added
+
+* **M.A.R.I.A submissions integration** for CI/CD results publishing:
+  * New CLI flags: `--maria-url`, `--maria-token`, `--maria-repository-id`, `--maria-strict`
+  * Submission metadata flags: `--maria-submission-key`, `--maria-commit-sha`, `--maria-branch-name`,
+    `--maria-pipeline-name`, `--maria-pipeline-run-id`, `--maria-pull-request-id`,
+    `--maria-started-at-utc`, `--maria-tool-name`, `--maria-cli-version`
+  * Automatic metadata fallback from CI environment and git when values are not provided.
+* **GitHub Action support for M.A.R.I.A submission fields** via new action inputs:
+  `token`, `maria-url`, `maria-token`, `maria-repository-id`, `maria-pull-request-id`.
+* New adapter module `secscore.adapters.maria_provider` to isolate outbound submission logic.
+* Automated tests for M.A.R.I.A payload mapping and strict-mode failure behavior.
+
+### Changed
+
+* M.A.R.I.A payload now sends explicit `Score` and `Decision` plus severity `Summary`
+  (`Critical`, `High`, `Medium`, `Low`) for submission endpoints.
+* Package metadata now declares all runtime dependencies used by the CLI (`pyyaml`, `requests`, `rich`).
+
+### Fixed
+
+* Package runtime metadata mismatch where `rich` was used by CLI but not declared in `pyproject.toml`.
+
+---
+## v0.3.0 â€” 2026-03
 
 ### Added
 
@@ -18,7 +44,7 @@ The format is based on semantic versioning and follows a simple chronological re
   Gracefully degrades (warning, no abort) when not running inside a git repository or when
   the diff returns no changed files.
 * **Suppressions by fingerprint**: policy `suppressions.deny_fingerprints` list allows
-  suppressing specific known false positives by their finding fingerprint — traceable and
+  suppressing specific known false positives by their finding fingerprint â€” traceable and
   reviewable in version control.
 * `action.yml` new inputs: `no_diff_aware`, `base_ref`.
 * `policy_validator.py` now validates `suppressions.deny_fingerprints` entries.
@@ -44,7 +70,7 @@ The format is based on semantic versioning and follows a simple chronological re
 
 ---
 
-## v0.2.0 — 2026-03
+## v0.2.0 â€” 2026-03
 
 ### Added
 
@@ -62,7 +88,7 @@ The format is based on semantic versioning and follows a simple chronological re
 
 ---
 
-## v0.1.0 — Initial Release
+## v0.1.0 â€” Initial Release
 
 ### Added
 

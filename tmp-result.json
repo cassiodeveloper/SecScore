@@ -1,0 +1,13 @@
+{
+  "score": 84,
+  "decision": "REVIEW",
+  "reasons": [
+    "Potential path traversal risk",
+    "SQL query built using user input",
+    "Unvalidated redirect"
+  ],
+  "hard_fails": [],
+  "penalties_total": 15.68,
+  "findings_new_count": 4,
+  "findings_shown_count": 4
+}
