@@ -1,4 +1,4 @@
-﻿name: "SecScore"
+name: "SecScore"
 description: "Security scoring engine for CI/CD pipelines. Convert SARIF findings into a single score and security decision."
 author: "Cássio B. Pereira a.k.a. @cassiodeveloper"
 branding:
