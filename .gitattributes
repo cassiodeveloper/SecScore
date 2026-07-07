@@ -1,0 +1,16 @@
+# Normalize line endings: store LF in the repository and check out LF,
+# so shell blocks in action.yml and CI stay valid on Linux runners
+# regardless of the contributor's OS or core.autocrlf setting.
+* text=auto eol=lf
+
+# Keep Windows-native scripts as CRLF (none today, listed for clarity).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Treat binaries explicitly so git never touches their bytes.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

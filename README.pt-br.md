@@ -35,7 +35,7 @@ Ele transforma findings de scanners em uma decisão objetiva de PR: **PASS / REV
 1. Execute com SARIF + policy:
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif tests/fixtures/review.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
@@ -44,11 +44,12 @@ python -m secscore.cli.main pr \
 2. Confira os artefatos:
 - `pr-comment.md` (resumo para comentário de PR)
 - `secscore-result.json` (resultado estruturado)
+- Opcional: `secscore-report.html` (relatório visual gerado com `--html-output true`)
 
 3. Opcional: enviar para M.A.R.I.A:
 
 ```bash
-python -m secscore.cli.main pr \
+SECSCORE_ALLOW_PRIVATE_MARIA_URLS=true secscore pr \
   --sarif tests/fixtures/review.sarif \
   --policy policy/policy-pr.yml \
   --maria-url http://localhost:5213/api/secscore/submissions \
@@ -66,7 +67,7 @@ Use estes comandos para validar rapidamente os comportamentos esperados:
 ### PASS
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif tests/fixtures/pass.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
@@ -77,7 +78,7 @@ Esperado: `Decision: PASS`
 ### REVIEW
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif tests/fixtures/review.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
@@ -88,7 +89,7 @@ Esperado: `Decision: REVIEW`
 ### FAIL
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif tests/fixtures/fail.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
@@ -111,16 +112,29 @@ Esperado: `Decision: FAIL`
 Exemplo com SARIF:
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif semgrep.sarif,trivy.sarif \
   --policy policy/policy-pr.yml \
   --no-diff-aware
 ```
 
+Gerar também um relatório HTML visual a partir do JSON padrão:
+
+```bash
+secscore pr \
+  --sarif tests/fixtures/review.sarif \
+  --policy policy/policy-pr.yml \
+  --no-diff-aware \
+  --html-output true
+```
+
+O JSON é sempre gerado. Quando o HTML está ativado, o SecScore também grava
+`secscore-report.html` por padrão. Use `--html-out meu-relatorio.html` para escolher outro caminho.
+
 Exemplo com envio para M.A.R.I.A:
 
 ```bash
-python -m secscore.cli.main pr \
+secscore pr \
   --sarif semgrep.sarif,trivy.sarif \
   --policy policy/policy-pr.yml \
   --maria-url https://demo.mariaappsec.com/api/secscore/submissions \
@@ -139,9 +153,30 @@ Flags úteis de override:
 - `--maria-pipeline-run-id`
 - `--maria-pull-request-id`
 
+### Comportamento de import de policy do M.A.R.I.A
+
+- Quando a integração com M.A.R.I.A está configurada (`--maria-url`, `--maria-repository-id`, `--token`/`--maria-token`),
+  o SecScore importa a policy do M.A.R.I.A por padrão.
+- A policy importada é salva em toda execução em `policy/policy-maria.yml`.
+- A execução passa a usar `policy/policy-maria.yml` como policy efetiva.
+- Use `--maria-import-policy false` para continuar usando a policy local informada em `--policy`.
+
 ---
 
 ## GitHub Action
+
+Permissões recomendadas no workflow:
+
+```yaml
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  issues: write
+```
+
+O SecScore usa `contents: read` para acessar o repositório, `checks: write` para criar o status check,
+e `issues: write`/`pull-requests: write` para atualizar comentários de PR e gerenciar a label de revisão.
 
 ```yaml
 - uses: actions/checkout@v4
@@ -155,6 +190,24 @@ Flags úteis de override:
     maria-url: "https://demo.mariaappsec.com/api/secscore/submissions"
     maria-repository-id: "11111111-2222-3333-4444-555555555555"
     maria-token: ${{ secrets.MARIA_TOKEN }}
+```
+
+Gerar e publicar o relatório HTML como artifact do workflow:
+
+```yaml
+- name: Run SecScore
+  uses: cassiodeveloper/secscore@v1
+  with:
+    sarif: results.sarif
+    html_output: "true"
+
+- name: Upload SecScore report
+  uses: actions/upload-artifact@v4
+  with:
+    name: secscore-report
+    path: |
+      secscore-result.json
+      secscore-report.html
 ```
 
 ---

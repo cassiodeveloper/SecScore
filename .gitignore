@@ -212,6 +212,13 @@ __marimo__/
 *.sarif
 pr-comment.md
 secscore-result.json
+secscore-report.html
+
+# Generated at runtime by the M.A.R.I.A policy import (overwritten every run)
+policy/policy-maria.yml
+
+# Scratch / test artifacts
+tmp-*
 
 # Allow SARIF examples
 !examples/*.sarif
