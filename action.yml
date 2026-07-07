@@ -57,6 +57,9 @@ inputs:
   maria-token:
     description: "M.A.R.I.A bearer token (overrides token)"
     required: false
+  maria-import-policy:
+    description: "Set to 'true' or 'false' to control M.A.R.I.A policy import behavior"
+    required: false
   maria-repository-id:
     description: "M.A.R.I.A repository id (GUID) for submissions endpoint"
     required: false
@@ -66,6 +69,14 @@ inputs:
   branch:
     description: "Branch name for context"
     required: false
+  html_output:
+    description: "Set to 'true' to generate secscore-report.html from secscore-result.json"
+    required: false
+    default: "false"
+  html_out:
+    description: "Path to the generated HTML report"
+    required: false
+    default: "secscore-report.html"
 
 outputs:
   decision:
@@ -96,8 +107,30 @@ runs:
   - name: Run SecScore
     id: secscore
     shell: bash
+    env:
+      INPUT_POLICY: ${{ inputs.policy }}
+      INPUT_SARIF: ${{ inputs.sarif }}
+      INPUT_FINDINGS: ${{ inputs.findings }}
+      INPUT_PROVIDER: ${{ inputs.provider }}
+      INPUT_NO_DIFF_AWARE: ${{ inputs.no_diff_aware }}
+      INPUT_BASE_REF: ${{ inputs.base_ref }}
+      INPUT_BRANCH: ${{ inputs.branch }}
+      GITHUB_HEAD_REF_VALUE: ${{ github.head_ref }}
+      INPUT_HTML_OUTPUT: ${{ inputs.html_output }}
+      INPUT_HTML_OUT: ${{ inputs.html_out }}
+      INPUT_CHECKMARX_PROJECT: ${{ inputs.checkmarx-project }}
+      INPUT_CHECKMARX_BASE_URL: ${{ inputs.checkmarx-base-url }}
+      INPUT_CHECKMARX_TOKEN: ${{ inputs.checkmarx-token }}
+      INPUT_CHECKMARX_TENANT: ${{ inputs.checkmarx-tenant }}
+      INPUT_TOKEN: ${{ inputs.token }}
+      INPUT_MARIA_URL: ${{ inputs.maria-url }}
+      INPUT_MARIA_TOKEN: ${{ inputs.maria-token }}
+      INPUT_MARIA_IMPORT_POLICY: ${{ inputs.maria-import-policy }}
+      INPUT_MARIA_REPOSITORY_ID: ${{ inputs.maria-repository-id }}
+      INPUT_MARIA_PULL_REQUEST_ID: ${{ inputs.maria-pull-request-id }}
+      GITHUB_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
     run: |
-      POLICY_PATH="${{ inputs.policy }}"
+      POLICY_PATH="${INPUT_POLICY}"
       if [ -z "$POLICY_PATH" ]; then
         POLICY_PATH="${GITHUB_ACTION_PATH}/policy/policy-default.yml"
         echo "Using default policy from action"
@@ -106,112 +139,94 @@ runs:
       fi
 
       # Monta argumento --sarif (pode ser lista separada por vÃ­rgula)
-      SARIF_ARG=""
-      if [ -n "${{ inputs.sarif }}" ]; then
-        SARIF_ARG="--sarif ${{ inputs.sarif }}"
+      args=()
+      if [ -n "${INPUT_SARIF}" ]; then
+        args+=(--sarif "${INPUT_SARIF}")
       fi
-
-      FINDINGS_ARG=""
-      if [ -n "${{ inputs.findings }}" ]; then
-        FINDINGS_ARG="--findings ${{ inputs.findings }}"
+      if [ -n "${INPUT_FINDINGS}" ]; then
+        args+=(--findings "${INPUT_FINDINGS}")
       fi
-
-      PROVIDER_ARG=""
-      if [ -n "${{ inputs.provider }}" ]; then
-        PROVIDER_ARG="--provider ${{ inputs.provider }}"
+      if [ -n "${INPUT_PROVIDER}" ]; then
+        args+=(--provider "${INPUT_PROVIDER}")
       fi
 
       # Diff-aware opt-out
-      DIFF_ARG=""
-      if [ "${{ inputs.no_diff_aware }}" = "true" ]; then
-        DIFF_ARG="--no-diff-aware"
+      if [ "${INPUT_NO_DIFF_AWARE}" = "true" ]; then
+        args+=(--no-diff-aware)
       fi
 
       # Base ref
-      BASE_REF_ARG=""
-      if [ -n "${{ inputs.base_ref }}" ]; then
-        BASE_REF_ARG="--base-ref ${{ inputs.base_ref }}"
+      if [ -n "${INPUT_BASE_REF}" ]; then
+        args+=(--base-ref "${INPUT_BASE_REF}")
       fi
 
-      BRANCH_ARG=""
-      if [ -n "${{ inputs.branch }}" ]; then
-        BRANCH_ARG="--branch ${{ inputs.branch }}"
-      elif [ -n "${{ github.head_ref }}" ]; then
-        BRANCH_ARG="--branch ${{ github.head_ref }}"
+      if [ -n "${INPUT_BRANCH}" ]; then
+        args+=(--branch "${INPUT_BRANCH}")
+      elif [ -n "${GITHUB_HEAD_REF_VALUE}" ]; then
+        args+=(--branch "${GITHUB_HEAD_REF_VALUE}")
       fi
 
-      CHECKMARX_PROJECT_ARG=""
-      if [ -n "${{ inputs.checkmarx-project }}" ]; then
-        CHECKMARX_PROJECT_ARG="--checkmarx-project ${{ inputs.checkmarx-project }}"
+      if [ "${INPUT_HTML_OUTPUT}" = "true" ]; then
+        args+=(--html-output true)
       fi
 
-      CHECKMARX_BASE_URL_ARG=""
-      if [ -n "${{ inputs.checkmarx-base-url }}" ]; then
-        CHECKMARX_BASE_URL_ARG="--checkmarx-base-url ${{ inputs.checkmarx-base-url }}"
+      if [ -n "${INPUT_HTML_OUT}" ]; then
+        args+=(--html-out "${INPUT_HTML_OUT}")
       fi
 
-      CHECKMARX_TOKEN_ARG=""
-      if [ -n "${{ inputs.checkmarx-token }}" ]; then
-        CHECKMARX_TOKEN_ARG="--checkmarx-token ${{ inputs.checkmarx-token }}"
+      if [ -n "${INPUT_CHECKMARX_PROJECT}" ]; then
+        args+=(--checkmarx-project "${INPUT_CHECKMARX_PROJECT}")
+      fi
+
+      if [ -n "${INPUT_CHECKMARX_BASE_URL}" ]; then
+        args+=(--checkmarx-base-url "${INPUT_CHECKMARX_BASE_URL}")
+      fi
+
+      if [ -n "${INPUT_CHECKMARX_TOKEN}" ]; then
+        args+=(--checkmarx-token "${INPUT_CHECKMARX_TOKEN}")
       fi
 
       # Generic token integration argument
-      TOKEN_ARG=""
-      if [ -n "${{ inputs.token }}" ]; then
-        TOKEN_ARG="--token ${{ inputs.token }}"
+      if [ -n "${INPUT_TOKEN}" ]; then
+        args+=(--token "${INPUT_TOKEN}")
       fi
 
       # M.A.R.I.A integration arguments
-      MARIA_URL_ARG=""
-      if [ -n "${{ inputs.maria-url }}" ]; then
-        MARIA_URL_ARG="--maria-url ${{ inputs.maria-url }}"
+      if [ -n "${INPUT_MARIA_URL}" ]; then
+        args+=(--maria-url "${INPUT_MARIA_URL}")
       fi
 
-      MARIA_TOKEN_ARG=""
-      if [ -n "${{ inputs.maria-token }}" ]; then
-        MARIA_TOKEN_ARG="--maria-token ${{ inputs.maria-token }}"
+      if [ -n "${INPUT_MARIA_TOKEN}" ]; then
+        args+=(--maria-token "${INPUT_MARIA_TOKEN}")
       fi
 
-      MARIA_REPOSITORY_ID_ARG=""
-      if [ -n "${{ inputs.maria-repository-id }}" ]; then
-        MARIA_REPOSITORY_ID_ARG="--maria-repository-id ${{ inputs.maria-repository-id }}"
+      if [ -n "${INPUT_MARIA_IMPORT_POLICY}" ]; then
+        args+=(--maria-import-policy "${INPUT_MARIA_IMPORT_POLICY}")
       fi
 
-      MARIA_PULL_REQUEST_ID_ARG=""
-      if [ -n "${{ inputs.maria-pull-request-id }}" ]; then
-        MARIA_PULL_REQUEST_ID_ARG="--maria-pull-request-id ${{ inputs.maria-pull-request-id }}"
-      elif [ -n "${{ github.event.pull_request.number }}" ]; then
-        MARIA_PULL_REQUEST_ID_ARG="--maria-pull-request-id ${{ github.event.pull_request.number }}"
+      if [ -n "${INPUT_MARIA_REPOSITORY_ID}" ]; then
+        args+=(--maria-repository-id "${INPUT_MARIA_REPOSITORY_ID}")
       fi
 
-      CHECKMARX_TENANT_ARG=""
-      if [ -n "${{ inputs.checkmarx-tenant }}" ]; then
-        CHECKMARX_TENANT_ARG="--checkmarx-tenant ${{ inputs.checkmarx-tenant }}"
+      if [ -n "${INPUT_MARIA_PULL_REQUEST_ID}" ]; then
+        args+=(--maria-pull-request-id "${INPUT_MARIA_PULL_REQUEST_ID}")
+      elif [ -n "${GITHUB_PULL_REQUEST_NUMBER}" ]; then
+        args+=(--maria-pull-request-id "${GITHUB_PULL_REQUEST_NUMBER}")
+      fi
+
+      if [ -n "${INPUT_CHECKMARX_TENANT}" ]; then
+        args+=(--checkmarx-tenant "${INPUT_CHECKMARX_TENANT}")
       fi
 
       set +e
       python3 -m secscore.cli.main pr \
-        ${SARIF_ARG} \
-        ${FINDINGS_ARG} \
-        ${PROVIDER_ARG} \
+        "${args[@]}" \
         --policy "$POLICY_PATH" \
         --out pr-comment.md \
-        --json-out secscore-result.json \
-        ${DIFF_ARG} \
-        ${BASE_REF_ARG} \
-        ${BRANCH_ARG} \
-        ${CHECKMARX_PROJECT_ARG} \
-        ${CHECKMARX_BASE_URL_ARG} \
-        ${CHECKMARX_TOKEN_ARG} \
-        ${CHECKMARX_TENANT_ARG} \
-        ${TOKEN_ARG} \
-        ${MARIA_URL_ARG} \
-        ${MARIA_TOKEN_ARG} \
-        ${MARIA_REPOSITORY_ID_ARG} \
-        ${MARIA_PULL_REQUEST_ID_ARG}
+        --json-out secscore-result.json
 
       code=$?
-      echo "exit_code=$code" >> $GITHUB_OUTPUT
+      echo "exit_code=$code" >> "$GITHUB_OUTPUT"
       exit 0
 
   - name: Read SecScore result
@@ -233,10 +248,12 @@ runs:
   - name: Label PR based on SecScore
     if: ${{ always() }}
     uses: actions/github-script@v7
+    env:
+      LABEL_REVIEW: ${{ inputs.label_review }}
     with:
       script: |
         const fs = require('fs');
-        const label = '${{ inputs.label_review }}';
+        const label = process.env.LABEL_REVIEW;
 
         if (!fs.existsSync('secscore-result.json')) return;
 
@@ -270,10 +287,12 @@ runs:
   - name: Create SecScore status check
     if: ${{ always() }}
     uses: actions/github-script@v7
+    env:
+      CHECK_NAME: ${{ inputs.check_name }}
     with:
       script: |
         const fs = require('fs');
-        const checkName = '${{ inputs.check_name }}';
+        const checkName = process.env.CHECK_NAME;
 
         if (!fs.existsSync('secscore-result.json')) {
           await github.rest.checks.create({

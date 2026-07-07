@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-import json
 import fnmatch
+import math
 
 Decision = str  # "PASS" | "REVIEW" | "FAIL"
 
@@ -71,9 +71,7 @@ def run_engine(inp: EngineInput) -> EngineResult:
     hard_fails = _evaluate_hard_fails(findings_new, policy)
 
     # 4) Score
-    base_score      = int(policy["scoring"]["base_score"])
-    penalties_total = sum(_score_finding(f, policy) for f in findings_new)
-    score           = max(0, int(round(base_score - penalties_total)))
+    score, penalties_total = _compute_score(findings_new, policy)
 
     # 5) Decisão
     decision = _decide(score, hard_fails, policy)
@@ -203,6 +201,93 @@ def _score_finding(f: Dict[str, Any], policy: Dict[str, Any]) -> float:
     return base * conf_mult * fix_mult
 
 
+def _compute_score(findings_new: List[Dict[str, Any]], policy: Dict[str, Any]) -> Tuple[int, float]:
+    scoring = policy.get("scoring") or {}
+    model = str(scoring.get("model") or "").strip().lower()
+
+    if model == "maria_riskscore_v1":
+        return _compute_maria_risk_score(findings_new, policy)
+
+    base_score = int(scoring["base_score"])
+    penalties_total = sum(_score_finding(f, policy) for f in findings_new)
+    score = max(0, int(round(base_score - penalties_total)))
+    return score, float(penalties_total)
+
+
+def _compute_maria_risk_score(
+    findings_new: List[Dict[str, Any]],
+    policy: Dict[str, Any],
+) -> Tuple[int, float]:
+    scoring = policy.get("scoring") or {}
+    weights = scoring.get("risk_weights") or {}
+    context = scoring.get("application_context")
+    risk_profile = scoring.get("risk_profile") or {}
+
+    sev_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    for finding in findings_new:
+        sev = str(finding.get("severity", "")).strip().lower()
+        if sev in sev_counts:
+            sev_counts[sev] += 1
+
+    raw = (
+        sev_counts["critical"] * int(weights.get("critical", 10))
+        + sev_counts["high"] * int(weights.get("high", 5))
+        + sev_counts["medium"] * int(weights.get("medium", 2))
+        + sev_counts["low"] * int(weights.get("low", 1))
+    )
+
+    context_adjustment = _compute_maria_context_adjustment(context, weights)
+    base_score = _clamp_int(raw + context_adjustment, 0, 100)
+
+    combined_multiplier = 1.0
+    if bool(risk_profile.get("enabled", False)):
+        combined_multiplier = float(risk_profile.get("combined_multiplier", 1.0))
+
+    # Match C# MidpointRounding.AwayFromZero semantics for non-negative values.
+    final_score = _clamp_int(_round_away_from_zero(base_score * combined_multiplier), 0, 100)
+    return final_score, float(raw + context_adjustment)
+
+
+def _compute_maria_context_adjustment(
+    context: Optional[Dict[str, Any]],
+    weights: Dict[str, Any],
+) -> int:
+    if not isinstance(context, dict):
+        return 0
+
+    adjustment = 0
+    if bool(context.get("is_internet_exposed", False)):
+        adjustment += int(weights.get("internet_exposure", 12))
+    if bool(context.get("has_third_party_interaction", False)):
+        adjustment += int(weights.get("third_party_interaction", 8))
+    if bool(context.get("has_apis", False)):
+        adjustment += int(weights.get("api_exposure", 6))
+    if bool(context.get("handles_pii", False)):
+        adjustment += int(weights.get("pii_data", 10))
+
+    has_encrypted_data = bool(context.get("has_encrypted_data", False))
+    adjustment += int(weights.get("encryption_bonus", -4) if has_encrypted_data else weights.get("no_encryption", 8))
+
+    requires_authentication = bool(context.get("requires_authentication", False))
+    adjustment += int(
+        weights.get("authentication_bonus", -3)
+        if requires_authentication
+        else weights.get("no_authentication", 8)
+    )
+
+    return adjustment
+
+
+def _round_away_from_zero(value: float) -> int:
+    if value >= 0:
+        return int(math.floor(value + 0.5))
+    return int(math.ceil(value - 0.5))
+
+
+def _clamp_int(value: int, low: int, high: int) -> int:
+    return max(low, min(high, int(value)))
+
+
 def _decide(
     score: int,
     hard_fails: List[HardFailHit],
@@ -212,6 +297,16 @@ def _decide(
         return "FAIL"
 
     d = policy["decision"]
+    decision_model = str(d.get("model") or "").strip().lower()
+
+    if decision_model == "risk_score":
+        pass_max_score = int(d.get("pass_max_score", 49))
+        review_max_score = int(d.get("review_max_score", 79))
+        if score <= pass_max_score:
+            return "PASS"
+        if score <= review_max_score:
+            return "REVIEW"
+        return "FAIL"
 
     if score >= int(d["pass_min_score"]):
         return "PASS"

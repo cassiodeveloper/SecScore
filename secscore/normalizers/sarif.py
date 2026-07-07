@@ -10,6 +10,20 @@ from pathlib import Path
 from typing import List, Union
 
 
+def _resolve_sarif_path(path: str) -> Path:
+    base_dir = Path.cwd().resolve()
+    raw_path = Path(str(path).strip()).expanduser()
+    candidate = raw_path if raw_path.is_absolute() else base_dir / raw_path
+    resolved = candidate.resolve(strict=True)
+
+    try:
+        resolved.relative_to(base_dir)
+    except ValueError as exc:
+        raise ValueError(f"SARIF path must resolve inside the current workspace: {base_dir}") from exc
+
+    return resolved
+
+
 def normalize_sarif(path: Union[str, List[str]]) -> dict:
     """
     Aceita um único path (str) ou uma lista de paths (List[str]).
@@ -41,7 +55,8 @@ def normalize_sarif(path: Union[str, List[str]]) -> dict:
 
 def _parse_single(path: str) -> list:
     """Parseia um único arquivo SARIF e retorna lista de findings."""
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    sarif_path = _resolve_sarif_path(path)
+    data = json.loads(sarif_path.read_text(encoding="utf-8"))
     findings = []
 
     for run in data.get("runs", []):

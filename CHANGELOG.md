@@ -6,6 +6,59 @@ The format is based on semantic versioning and follows a simple chronological re
 
 ---
 
+## v0.5.0 — 2026-07
+
+### Added
+
+* Console entry point for installed environments:
+  `secscore pr ...` can now be used instead of `python -m secscore.cli.main pr ...`.
+* Optional HTML report output generated from the standard JSON result:
+  `--html-output true` and `--html-out secscore-report.html`.
+* GitHub Action inputs `html_output` and `html_out` for publishing the visual report as a workflow artifact.
+* HTML report polish: dark/light toggle, risk summary, linked findings and artifacts,
+  copy JSON path action, collapsible execution parameters, and report footer metadata.
+* Optional **M.A.R.I.A policy import** with `--maria-import-policy` and `--maria-policy-url`,
+  allowing SecScore to sync repository risk policy before scoring.
+* M.A.R.I.A risk score model support (`maria_riskscore_v1`) including risk weights,
+  application context, and risk profile multipliers.
+
+### Changed
+
+* Package version bumped to `0.5.0`.
+* GitHub Action now documents the workflow permissions needed for checks, PR comments,
+  and labels.
+* CI workflow now declares explicit least-privilege read access with `permissions: contents: read`.
+* PR comment renderer now honors the policy `reporting` block
+  (`max_findings_in_comment`, `max_reasons`, `include_fields`) instead of always
+  falling back to fixed defaults.
+
+### Fixed
+
+* `include_fields` in the policy `reporting` block is now actually applied when
+  rendering finding lines (location and metadata fields), instead of being ignored.
+
+### Security
+
+* Hardened M.A.R.I.A outbound requests against server-side request forgery by validating
+  URL schemes, rejecting embedded credentials, and blocking local/private/reserved network
+  targets by default. Private/local URLs require explicit trusted opt-in with
+  `SECSCORE_ALLOW_PRIVATE_MARIA_URLS=true`.
+* Hardened CLI and SARIF file handling against uncontrolled path access by resolving paths
+  and requiring them to stay inside the current workspace or approved CI roots.
+* Hardened the GitHub composite action against code injection by moving input interpolation
+  into environment variables and passing CLI arguments through quoted Bash arrays.
+* Hardened the PR comment against Markdown injection from untrusted scanner output by
+  escaping finding titles, paths and metadata, and percent-encoding link targets.
+
+### Repository
+
+* Added `.gitattributes` enforcing LF line endings so the composite action's Bash steps
+  stay valid on Linux runners regardless of contributor OS.
+* Ignored generated artifacts (`secscore-report.html`, runtime `policy/policy-maria.yml`,
+  `tmp-*`) and stopped tracking `tmp-result.json`.
+
+---
+
 ## v0.4.0 — 2026-04
 
 ### Added
